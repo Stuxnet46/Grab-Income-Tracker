@@ -10,274 +10,463 @@
 <title>Grab Income Tracker</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <style>
-  :root {
-    --green: #00c864;
-    --green-bright: #00f07a;
-    --gold: #ffc800;
-    --blue: #0a1628;
-    --blue-mid: #0d2137;
-    --blue-light: #1a3a5c;
-    --text: #e8f4fd;
-    --muted: #4a7a9b;
-    --border: rgba(255,255,255,0.08);
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-  html, body { height: 100%; background: var(--blue); overflow: hidden; }
-  body {
-    font-family: 'DM Sans', sans-serif;
-    color: var(--text);
-    display: flex; flex-direction: column;
-    max-width: 480px; margin: 0 auto;
-    position: relative;
-  }
+:root {
+  --green: #00c864;
+  --green-bright: #00f07a;
+  --green-dark: #00a855;
+  --gold: #ffc800;
+  --blue: #0a1628;
+  --blue-mid: #0d2137;
+  --blue-light: #1a3a5c;
+  --text: #e8f4fd;
+  --muted: #4a7a9b;
+  --border: rgba(255,255,255,0.08);
+  --card-bg: rgba(255,255,255,0.04);
+  --header-bg: rgba(10,22,40,0.95);
+  --page-bg: #0a1628;
+  --input-bg: rgba(255,255,255,0.07);
+  --modal-bg: linear-gradient(180deg,#0d2137 0%,#071a2e 100%);
+  --session-bg: rgba(255,255,255,0.04);
+  --day-bg: rgba(255,255,255,0.04);
+  --stat-bg: rgba(255,255,255,0.04);
+  --rate-bg: rgba(0,100,255,0.08);
+  --rate-border: rgba(0,100,255,0.2);
+  --rate-label: #5b8dd9;
+  --rate-val: #7ab4ff;
+  --ticker-bg: #00c864;
+  --ticker-text: #071a2e;
+}
+.light {
+  --green: #00a84a;
+  --green-bright: #007a35;
+  --green-dark: #006b2c;
+  --gold: #d4a000;
+  --blue: #f0f7f0;
+  --blue-mid: #e8f5e9;
+  --blue-light: #c8e6c9;
+  --text: #1a2e1a;
+  --muted: #5a7a5a;
+  --border: rgba(0,100,50,0.15);
+  --card-bg: rgba(255,255,255,0.85);
+  --header-bg: rgba(240,247,240,0.97);
+  --page-bg: #f0f7f0;
+  --input-bg: rgba(255,255,255,0.9);
+  --modal-bg: linear-gradient(180deg,#ffffff 0%,#e8f5e9 100%);
+  --session-bg: rgba(255,255,255,0.8);
+  --day-bg: rgba(255,255,255,0.8);
+  --stat-bg: rgba(255,255,255,0.8);
+  --rate-bg: rgba(0,168,74,0.08);
+  --rate-border: rgba(0,168,74,0.25);
+  --rate-label: #007a35;
+  --rate-val: #005a28;
+  --ticker-bg: #00a84a;
+  --ticker-text: #ffffff;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; overflow: hidden; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  color: var(--text);
+  background: var(--page-bg);
+  display: flex; flex-direction: column;
+  max-width: 480px; margin: 0 auto;
+  transition: background 0.3s, color 0.3s;
+}
 
-  /* Scrollable content area */
-  #app { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+/* BG glow dark only */
+.bg-glow {
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background: radial-gradient(ellipse at 15% 10%, rgba(0,200,100,0.07) 0%, transparent 55%),
+              radial-gradient(ellipse at 85% 85%, rgba(0,120,255,0.05) 0%, transparent 55%),
+              linear-gradient(160deg, #0a1628 0%, #0d2137 50%, #071a2e 100%);
+  opacity: 1; transition: opacity 0.3s;
+}
+.light .bg-glow { opacity: 0; }
 
-  /* Background */
-  .bg-glow {
-    position: fixed; inset: 0; pointer-events: none; z-index: 0;
-    background:
-      radial-gradient(ellipse at 15% 10%, rgba(0,200,100,0.07) 0%, transparent 55%),
-      radial-gradient(ellipse at 85% 85%, rgba(0,120,255,0.05) 0%, transparent 55%),
-      linear-gradient(160deg, #0a1628 0%, #0d2137 50%, #071a2e 100%);
-  }
+/* ===== PIN SCREEN ===== */
+#pinScreen {
+  position: fixed; inset: 0; z-index: 200;
+  background: var(--page-bg);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: flex-start;
+  overflow-y: auto;
+  transition: background 0.3s;
+}
+.pin-ticker {
+  width: 100%; background: var(--ticker-bg);
+  overflow: hidden; height: 28px; display: flex; align-items: center; flex-shrink: 0;
+}
+.pin-ticker-inner {
+  white-space: nowrap; animation: ticker 18s linear infinite;
+  font-size: 11px; font-weight: 700; color: var(--ticker-text);
+  letter-spacing: 2px; font-family: 'Syne', sans-serif;
+}
+.pin-wrap {
+  width: 100%; max-width: 420px; padding: 30px 24px 40px;
+  display: flex; flex-direction: column; align-items: center;
+}
+.pin-logo {
+  width: 72px; height: 72px; border-radius: 18px;
+  background: linear-gradient(135deg, var(--green) 0%, var(--green-dark) 100%);
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 16px;
+  box-shadow: 0 8px 30px rgba(0,200,100,0.3);
+}
+.pin-logo-text { font-size: 22px; font-weight: 900; color: #fff; font-family: 'Syne', sans-serif; }
+.pin-badge {
+  border: 1px solid var(--green); border-radius: 20px;
+  padding: 4px 14px; font-size: 10px; color: var(--green);
+  letter-spacing: 2px; text-transform: uppercase; font-family: 'Syne', sans-serif;
+  margin-bottom: 10px;
+}
+.pin-title { font-size: 26px; font-weight: 900; font-family: 'Syne', sans-serif; text-align: center; margin-bottom: 6px; }
+.pin-sub { font-size: 13px; color: var(--muted); text-align: center; margin-bottom: 6px; }
+.pin-sub span { color: var(--green); font-weight: 700; }
+.pin-mode-tabs { display: flex; gap: 0; border-radius: 10px; overflow: hidden; border: 1px solid var(--border); margin-bottom: 24px; }
+.pin-mode-tab {
+  flex: 1; padding: 9px 0; font-size: 13px; font-weight: 700;
+  border: none; cursor: pointer; font-family: 'DM Sans', sans-serif;
+  transition: all 0.2s;
+}
+.pin-mode-tab.active { background: var(--green); color: #fff; }
+.pin-mode-tab.inactive { background: transparent; color: var(--muted); }
+.pin-dots { display: flex; gap: 14px; margin-bottom: 28px; }
+.pin-dot {
+  width: 14px; height: 14px; border-radius: 50%;
+  border: 2px solid var(--green); background: transparent;
+  transition: background 0.15s;
+}
+.pin-dot.filled { background: var(--green); }
+.pin-error { font-size: 12px; color: #ff4444; margin-bottom: 10px; min-height: 18px; font-weight: 600; }
+.pin-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; width: 100%; max-width: 300px; }
+.pin-key {
+  padding: 18px 0; border-radius: 14px; border: 1px solid var(--border);
+  background: var(--card-bg); font-size: 22px; font-weight: 700;
+  color: var(--text); cursor: pointer; font-family: 'Syne', sans-serif;
+  transition: all 0.15s; text-align: center;
+}
+.pin-key:active { background: var(--green); color: #fff; transform: scale(0.95); }
+.pin-key.del { font-size: 14px; font-weight: 700; color: var(--muted); }
+.pin-key.empty { background: transparent; border-color: transparent; pointer-events: none; }
+.pin-footer-note { font-size: 11px; color: var(--muted); margin-top: 20px; text-align: center; }
 
-  /* Header */
-  .header {
-    position: relative; z-index: 10;
-    background: rgba(10,22,40,0.95);
-    backdrop-filter: blur(20px);
-    border-bottom: 1px solid rgba(0,200,100,0.15);
-    padding: 14px 18px 0;
-    flex-shrink: 0;
-  }
-  .header-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
-  .header-brand { display: flex; flex-direction: column; }
-  .brand-label { font-size: 10px; color: var(--green); letter-spacing: 3px; text-transform: uppercase; font-weight: 700; font-family: 'Syne', sans-serif; }
-  .brand-title { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; font-family: 'Syne', sans-serif; }
-  .header-clock { text-align: right; }
-  .clock-date { font-size: 10px; color: var(--muted); }
-  .clock-time { font-size: 19px; font-weight: 700; color: var(--green-bright); font-variant-numeric: tabular-nums; letter-spacing: 1px; }
+/* ===== TICKER ===== */
+.ticker-wrap {
+  position: sticky; top: 0; z-index: 100;
+  background: var(--ticker-bg);
+  overflow: hidden; height: 26px; display: flex; align-items: center;
+  flex-shrink: 0;
+}
+.ticker-inner {
+  white-space: nowrap; animation: ticker 20s linear infinite;
+  font-size: 10px; font-weight: 700; color: var(--ticker-text);
+  letter-spacing: 2.5px; font-family: 'Syne', sans-serif; padding-left: 100%;
+}
+@keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
 
-  /* Tabs */
-  .tabs { display: flex; gap: 4px; padding-bottom: 12px; }
-  .tab {
-    flex: 1; padding: 8px 0; border-radius: 8px; border: none; cursor: pointer;
-    font-weight: 700; font-size: 12px; letter-spacing: 0.3px;
-    transition: all 0.2s; font-family: 'DM Sans', sans-serif;
-  }
-  .tab.active { background: var(--green); color: #071a2e; }
-  .tab.inactive { background: rgba(255,255,255,0.06); color: var(--muted); }
+/* ===== APP ===== */
+#app { display: flex; flex-direction: column; height: 100vh; overflow: hidden; position: relative; z-index: 1; }
 
-  /* Scrollable content */
-  .content { flex: 1; overflow-y: auto; overflow-x: hidden; position: relative; z-index: 1; padding: 18px 16px 80px; }
-  .content::-webkit-scrollbar { width: 3px; }
-  .content::-webkit-scrollbar-thumb { background: rgba(0,200,100,0.3); border-radius: 2px; }
+/* Header */
+.header {
+  position: relative; z-index: 10;
+  background: var(--header-bg);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 16px 0;
+  flex-shrink: 0;
+  transition: background 0.3s;
+}
+.header-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+.header-brand {}
+.brand-label { font-size: 10px; color: var(--green); letter-spacing: 3px; text-transform: uppercase; font-weight: 700; font-family: 'Syne', sans-serif; }
+.brand-title { font-size: 19px; font-weight: 800; letter-spacing: -0.5px; font-family: 'Syne', sans-serif; }
+.header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.header-clock { text-align: right; }
+.clock-date { font-size: 10px; color: var(--muted); }
+.clock-time { font-size: 18px; font-weight: 700; color: var(--green); font-variant-numeric: tabular-nums; letter-spacing: 1px; }
+.theme-btn {
+  background: var(--card-bg); border: 1px solid var(--border);
+  border-radius: 20px; padding: 4px 10px; font-size: 10px;
+  font-weight: 700; color: var(--muted); cursor: pointer;
+  font-family: 'DM Sans', sans-serif; letter-spacing: 1px; text-transform: uppercase;
+  transition: all 0.2s;
+}
+.theme-btn:active { background: var(--green); color: #fff; }
+.tabs { display: flex; gap: 4px; padding-bottom: 10px; }
+.tab {
+  flex: 1; padding: 8px 0; border-radius: 8px; border: none; cursor: pointer;
+  font-weight: 700; font-size: 12px; letter-spacing: 0.3px;
+  transition: all 0.2s; font-family: 'DM Sans', sans-serif;
+}
+.tab.active { background: var(--green); color: #fff; }
+.tab.inactive { background: var(--card-bg); color: var(--muted); border: 1px solid var(--border); }
 
-  /* Cards */
-  .card {
-    border-radius: 16px; padding: 16px 18px; margin-bottom: 14px;
-    border: 1px solid var(--border);
-    background: rgba(255,255,255,0.04);
-  }
-  .card-green { background: rgba(0,200,100,0.08); border-color: rgba(0,200,100,0.2); }
-  .card-gold { background: rgba(255,200,0,0.07); border-color: rgba(255,200,0,0.22); }
-  .card-purple { background: rgba(130,80,255,0.08); border-color: rgba(130,80,255,0.2); }
-  .card-blue { background: rgba(0,100,255,0.08); border-color: rgba(0,100,255,0.2); }
+/* Content */
+.content { flex: 1; overflow-y: auto; overflow-x: hidden; position: relative; z-index: 1; padding: 16px 14px 80px; }
+.content::-webkit-scrollbar { width: 3px; }
+.content::-webkit-scrollbar-thumb { background: rgba(0,200,100,0.3); border-radius: 2px; }
 
-  .card-label {
-    font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase;
-    font-weight: 700; margin-bottom: 6px; font-family: 'Syne', sans-serif;
-  }
-  .label-green { color: var(--green); }
-  .label-gold { color: var(--gold); }
-  .label-purple { color: #a67fff; }
-  .label-blue { color: #5b8dd9; }
-  .label-muted { color: var(--muted); }
+/* Cards */
+.card { border-radius: 14px; padding: 14px 16px; margin-bottom: 12px; border: 1px solid var(--border); background: var(--card-bg); transition: background 0.3s; }
+.card-green { background: rgba(0,200,100,0.08); border-color: rgba(0,200,100,0.2); }
+.card-gold { background: rgba(255,200,0,0.07); border-color: rgba(255,200,0,0.22); }
+.card-purple { background: rgba(130,80,255,0.08); border-color: rgba(130,80,255,0.2); }
+.card-red { background: rgba(255,60,60,0.07); border-color: rgba(255,60,60,0.2); }
+.light .card-green { background: rgba(0,168,74,0.08); }
+.light .card-gold { background: rgba(212,160,0,0.08); }
+.light .card-purple { background: rgba(100,50,200,0.06); }
+.card-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; font-weight: 700; margin-bottom: 6px; font-family: 'Syne', sans-serif; }
+.label-green { color: var(--green); }
+.label-gold { color: var(--gold); }
+.label-purple { color: #a67fff; }
+.label-muted { color: var(--muted); }
+.label-red { color: #ff6060; }
+.light .label-purple { color: #6432c8; }
+.big-num { font-size: 30px; font-weight: 800; font-family: 'Syne', sans-serif; font-variant-numeric: tabular-nums; }
+.num-green { color: var(--green); }
+.num-gold { color: var(--gold); }
+.num-purple { color: #c4a0ff; }
+.light .num-purple { color: #6432c8; }
 
-  .big-num { font-size: 32px; font-weight: 800; font-family: 'Syne', sans-serif; font-variant-numeric: tabular-nums; }
-  .num-green { color: var(--green-bright); }
-  .num-gold { color: #ffd700; }
-  .num-purple { color: #c4a0ff; }
+/* Progress */
+.progress-wrap { margin-top: 10px; }
+.progress-meta { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-bottom: 5px; }
+.progress-pct { font-weight: 700; }
+.progress-track { height: 7px; border-radius: 4px; background: rgba(128,128,128,0.15); overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 4px; transition: width 0.6s ease; }
+.fill-green { background: var(--green); }
+.fill-gold { background: linear-gradient(90deg,#ffc800,#ff9500); }
+.fill-purple { background: linear-gradient(90deg,#8250ff,#a67fff); }
+.progress-note { font-size: 11px; color: var(--muted); margin-top: 5px; }
+.progress-note.success { color: var(--green); font-weight: 700; }
 
-  /* Progress bar */
-  .progress-wrap { margin-top: 10px; }
-  .progress-meta { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-bottom: 5px; }
-  .progress-pct { font-weight: 700; }
-  .progress-track { height: 8px; border-radius: 4px; background: rgba(255,255,255,0.1); overflow: hidden; }
-  .progress-fill { height: 100%; border-radius: 4px; transition: width 0.6s ease; }
-  .fill-green { background: var(--green); }
-  .fill-gold { background: linear-gradient(90deg, #ffc800, #ff9500); }
-  .fill-purple { background: linear-gradient(90deg, #8250ff, #a67fff); }
-  .progress-note { font-size: 11px; color: var(--muted); margin-top: 5px; }
-  .progress-note.success { color: var(--green); font-weight: 700; }
+/* ON/OFF */
+.onoff-wrap { display: flex; flex-direction: column; align-items: center; margin-bottom: 18px; gap: 10px; }
+.onoff-btn {
+  width: 124px; height: 124px; border-radius: 50%; border: none; cursor: pointer;
+  font-weight: 900; text-transform: uppercase; font-family: 'Syne', sans-serif;
+  transition: all 0.3s; position: relative;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+}
+.onoff-btn.on {
+  background: linear-gradient(145deg,#00d96e,#00a855);
+  color: #071a2e;
+  box-shadow: 0 0 50px rgba(0,200,100,0.4), 0 4px 20px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.25);
+}
+.onoff-btn.off {
+  background: var(--card-bg);
+  border: 2px solid var(--border);
+  color: var(--muted);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+}
+.onoff-btn.on::before {
+  content:''; position:absolute; inset:-14px; border-radius:50%;
+  background: radial-gradient(circle,rgba(0,200,100,0.2) 0%,transparent 70%);
+  animation: glow-pulse 2s infinite;
+}
+.onoff-icon { font-size: 26px; line-height: 1; }
+.onoff-label { font-size: 13px; }
+.onoff-since { text-align: center; }
+.since-label { font-size: 10px; color: var(--green); letter-spacing: 2px; text-transform: uppercase; }
+.since-time { font-size: 16px; font-weight: 700; color: var(--green); }
+.timer-display { font-size: 36px; font-weight: 900; letter-spacing: 3px; font-variant-numeric: tabular-nums; font-family: 'Syne', sans-serif; }
 
-  /* ON/OFF Button */
-  .onoff-wrap { display: flex; flex-direction: column; align-items: center; margin-bottom: 20px; gap: 10px; }
-  .onoff-btn {
-    width: 130px; height: 130px; border-radius: 50%; border: none; cursor: pointer;
-    font-size: 16px; font-weight: 900; letter-spacing: 1px; text-transform: uppercase;
-    font-family: 'Syne', sans-serif;
-    transition: all 0.3s; position: relative;
-    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
-  }
-  .onoff-btn.on {
-    background: linear-gradient(145deg, #00d96e 0%, #00a855 100%);
-    color: #071a2e;
-    box-shadow: 0 0 50px rgba(0,200,100,0.45), 0 4px 20px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.25);
-  }
-  .onoff-btn.off {
-    background: linear-gradient(145deg, #1a3a5c 0%, #0d2137 100%);
-    color: var(--muted);
-    box-shadow: 0 4px 20px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04);
-  }
-  .onoff-btn.on::before {
-    content: ''; position: absolute; inset: -14px; border-radius: 50%;
-    background: radial-gradient(circle, rgba(0,200,100,0.22) 0%, transparent 70%);
-    animation: glow-pulse 2s infinite;
-  }
-  .onoff-icon { font-size: 28px; line-height: 1; }
-  .onoff-label { font-size: 13px; }
-  .onoff-since { text-align: center; }
-  .since-label { font-size: 10px; color: var(--green); letter-spacing: 2px; text-transform: uppercase; }
-  .since-time { font-size: 17px; font-weight: 700; color: var(--green-bright); }
+/* Sessions */
+.session-list { display: flex; flex-direction: column; gap: 8px; }
+.session-item { background: var(--session-bg); border: 1px solid var(--border); border-radius: 12px; padding: 11px 13px; display: flex; justify-content: space-between; align-items: center; transition: background 0.3s; }
+.session-item.live { background: rgba(0,200,100,0.08); border-color: rgba(0,200,100,0.3); }
+.session-time { font-size: 13px; font-weight: 700; }
+.session-time.live { color: var(--green); }
+.session-note { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.session-note.live { color: var(--green); }
+.session-dur { font-size: 14px; font-weight: 800; color: var(--green); font-variant-numeric: tabular-nums; }
 
-  /* Timer display */
-  .timer-display { font-size: 38px; font-weight: 900; letter-spacing: 3px; font-variant-numeric: tabular-nums; font-family: 'Syne', sans-serif; }
+/* Rate grid */
+.rate-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.rate-card { background: var(--rate-bg); border: 1px solid var(--rate-border); border-radius: 12px; padding: 11px 7px; text-align: center; }
+.rate-label { font-size: 10px; color: var(--rate-label); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 5px; }
+.rate-val { font-weight: 800; color: var(--rate-val); font-variant-numeric: tabular-nums; line-height: 1.2; }
 
-  /* Session items */
-  .session-list { display: flex; flex-direction: column; gap: 8px; }
-  .session-item {
-    background: rgba(255,255,255,0.04); border: 1px solid var(--border);
-    border-radius: 12px; padding: 12px 14px;
-    display: flex; justify-content: space-between; align-items: center;
-  }
-  .session-item.live { background: rgba(0,200,100,0.08); border-color: rgba(0,200,100,0.3); }
-  .session-time { font-size: 13px; font-weight: 700; }
-  .session-time.live { color: var(--green-bright); }
-  .session-note { font-size: 11px; color: var(--muted); margin-top: 2px; }
-  .session-note.live { color: var(--green); }
-  .session-dur { font-size: 14px; font-weight: 800; color: var(--green); font-variant-numeric: tabular-nums; }
+/* Income input */
+.income-input-wrap { display: flex; gap: 8px; margin-top: 10px; }
+.income-input {
+  flex:1; background: var(--input-bg); border: 1px solid rgba(255,200,0,0.35);
+  border-radius: 10px; padding: 10px 13px; color: var(--gold); font-size: 16px;
+  font-weight: 700; outline: none; font-family: 'DM Sans', sans-serif;
+}
+.light .income-input { color: #a07000; border-color: rgba(212,160,0,0.5); }
+.income-input::placeholder { color: rgba(255,200,0,0.25); }
+.btn { border: none; border-radius: 10px; padding: 10px 15px; font-weight: 800; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 14px; transition: opacity 0.15s; }
+.btn:active { opacity: 0.75; }
+.btn-gold { background: var(--gold); color: #071a2e; }
+.btn-ghost { background: var(--card-bg); color: var(--muted); border: 1px solid var(--border); }
+.btn-green { background: var(--green); color: #fff; }
+.btn-outline-gold { background: rgba(255,200,0,0.1); border: 1px solid rgba(255,200,0,0.3); color: var(--gold); border-radius: 8px; padding: 6px 14px; font-size: 12px; margin-top: 10px; cursor: pointer; font-weight: 700; font-family: 'DM Sans', sans-serif; }
+.btn-primary { background: linear-gradient(135deg,#ffc800,#ff9500); color: #071a2e; border-radius: 12px; padding: 11px 20px; font-size: 14px; }
 
-  /* Earning rate grid */
-  .rate-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
-  .rate-card {
-    background: rgba(0,100,255,0.08); border: 1px solid rgba(0,100,255,0.2);
-    border-radius: 12px; padding: 12px 8px; text-align: center;
-  }
-  .rate-label { font-size: 10px; color: #5b8dd9; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 5px; }
-  .rate-val { font-weight: 800; color: #7ab4ff; font-variant-numeric: tabular-nums; line-height: 1.2; }
+/* BBM card */
+.bbm-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; }
+.bbm-label { font-size: 12px; color: var(--muted); }
+.bbm-val { font-size: 13px; font-weight: 700; }
+.bbm-divider { height: 1px; background: var(--border); margin: 8px 0; }
 
-  /* Income input */
-  .income-input-wrap { display: flex; gap: 8px; margin-top: 12px; }
-  .income-input {
-    flex: 1; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,200,0,0.35);
-    border-radius: 10px; padding: 11px 14px; color: #ffd700; font-size: 16px;
-    font-weight: 700; outline: none; font-family: 'DM Sans', sans-serif;
-  }
-  .income-input::placeholder { color: rgba(255,200,0,0.3); }
-  .btn { border: none; border-radius: 10px; padding: 11px 16px; font-weight: 800; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 14px; transition: opacity 0.15s; }
-  .btn:active { opacity: 0.75; }
-  .btn-gold { background: var(--gold); color: #071a2e; }
-  .btn-ghost { background: rgba(255,255,255,0.08); color: var(--muted); }
-  .btn-outline-gold {
-    background: rgba(255,200,0,0.12); border: 1px solid rgba(255,200,0,0.3);
-    color: var(--gold); border-radius: 8px; padding: 6px 14px; font-size: 12px;
-    margin-top: 10px; cursor: pointer; font-weight: 700; font-family: 'DM Sans', sans-serif;
-  }
-  .btn-primary {
-    background: linear-gradient(135deg, #ffc800, #ff9500); color: #071a2e;
-    border-radius: 12px; padding: 12px 22px; font-size: 15px;
-  }
+/* Notes */
+.notes-input {
+  width: 100%; background: var(--input-bg); border: 1px solid var(--border);
+  border-radius: 10px; padding: 10px 13px; color: var(--text); font-size: 13px;
+  outline: none; font-family: 'DM Sans', sans-serif; resize: none; margin-top: 8px;
+}
+.notes-input::placeholder { color: var(--muted); }
 
-  /* Week/Month day items */
-  .day-item {
-    background: rgba(255,255,255,0.04); border: 1px solid var(--border);
-    border-radius: 12px; padding: 12px 14px; margin-bottom: 8px;
-  }
-  .day-item.today { background: rgba(0,200,100,0.09); border-color: rgba(0,200,100,0.28); }
-  .day-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-  .day-name { font-size: 13px; font-weight: 700; }
-  .day-name.today { color: var(--green-bright); }
-  .day-badge { font-size: 9px; color: var(--green); font-weight: 700; letter-spacing: 1px; background: rgba(0,200,100,0.15); padding: 2px 6px; border-radius: 4px; margin-left: 6px; }
-  .day-income { font-size: 15px; font-weight: 800; }
-  .day-bar { height: 4px; border-radius: 2px; background: rgba(255,255,255,0.08); overflow: hidden; }
-  .day-bar-fill { height: 100%; border-radius: 2px; transition: width 0.5s; }
+/* Day items */
+.day-item { background: var(--day-bg); border: 1px solid var(--border); border-radius: 12px; padding: 11px 13px; margin-bottom: 8px; transition: background 0.3s; }
+.day-item.today { background: rgba(0,200,100,0.09); border-color: rgba(0,200,100,0.28); }
+.day-item.libur { background: rgba(255,60,60,0.06); border-color: rgba(255,60,60,0.2); }
+.day-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.day-name { font-size: 13px; font-weight: 700; }
+.day-name.today { color: var(--green); }
+.day-badge { font-size: 9px; color: var(--green); font-weight: 700; letter-spacing: 1px; background: rgba(0,200,100,0.15); padding: 2px 6px; border-radius: 4px; margin-left: 6px; }
+.day-badge.libur-badge { color: #ff6060; background: rgba(255,60,60,0.12); }
+.day-income { font-size: 15px; font-weight: 800; }
+.day-bar { height: 4px; border-radius: 2px; background: rgba(128,128,128,0.15); overflow: hidden; }
+.day-bar-fill { height: 100%; border-radius: 2px; transition: width 0.5s; }
 
-  /* Stats grid */
-  .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
-  .stat-card {
-    background: rgba(255,255,255,0.04); border: 1px solid var(--border);
-    border-radius: 12px; padding: 14px;
-  }
-  .stat-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
-  .stat-val { font-size: 16px; font-weight: 800; font-variant-numeric: tabular-nums; }
+/* Stats grid */
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.stat-card { background: var(--stat-bg); border: 1px solid var(--border); border-radius: 12px; padding: 13px; transition: background 0.3s; }
+.stat-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+.stat-val { font-size: 15px; font-weight: 800; font-variant-numeric: tabular-nums; }
 
-  /* Section title */
-  .section-title { font-size: 10px; color: var(--muted); letter-spacing: 2.5px; text-transform: uppercase; margin-bottom: 10px; font-family: 'Syne', sans-serif; }
+/* Section title */
+.section-title { font-size: 10px; color: var(--muted); letter-spacing: 2.5px; text-transform: uppercase; margin-bottom: 10px; font-family: 'Syne', sans-serif; }
 
-  /* Modal */
-  .modal-overlay {
-    position: fixed; inset: 0; z-index: 100;
-    background: rgba(0,0,0,0.75);
-    backdrop-filter: blur(10px);
-    display: flex; align-items: flex-end; justify-content: center;
-    opacity: 0; pointer-events: none; transition: opacity 0.25s;
-  }
-  .modal-overlay.show { opacity: 1; pointer-events: all; }
-  .modal-box {
-    background: linear-gradient(180deg, #0d2137 0%, #071a2e 100%);
-    border: 1px solid rgba(0,200,100,0.18);
-    border-radius: 22px 22px 0 0; padding: 24px 20px 44px;
-    width: 100%; max-width: 480px;
-    transform: translateY(100%); transition: transform 0.3s ease;
-  }
-  .modal-overlay.show .modal-box { transform: translateY(0); }
-  .modal-title { font-size: 17px; font-weight: 800; margin-bottom: 4px; font-family: 'Syne', sans-serif; }
-  .modal-sub { font-size: 12px; color: var(--muted); margin-bottom: 16px; }
-  .modal-textarea {
-    width: 100%; background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(0,200,100,0.25); border-radius: 12px;
-    padding: 13px 14px; color: var(--text); font-size: 14px;
-    resize: none; outline: none; margin-bottom: 14px;
-    font-family: 'DM Sans', sans-serif; line-height: 1.5;
-  }
-  .modal-textarea::placeholder { color: rgba(255,255,255,0.2); }
-  .modal-btns { display: flex; gap: 10px; }
-  .btn-cancel { flex: 1; padding: 14px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: var(--muted); font-weight: 700; cursor: pointer; font-size: 14px; font-family: 'DM Sans', sans-serif; }
-  .btn-off { flex: 2; padding: 14px; background: linear-gradient(135deg, #ff4444, #cc1111); border: none; border-radius: 12px; color: #fff; font-weight: 800; cursor: pointer; font-size: 14px; font-family: 'DM Sans', sans-serif; }
+/* Libur toggle */
+.libur-btn {
+  width: 100%; padding: 10px; border-radius: 10px; border: 1px dashed rgba(255,60,60,0.4);
+  background: transparent; color: #ff6060; font-size: 12px; font-weight: 700;
+  cursor: pointer; font-family: 'DM Sans', sans-serif; margin-top: 4px; transition: all 0.2s;
+}
+.libur-btn.active { background: rgba(255,60,60,0.12); border-style: solid; }
+.libur-btn:active { opacity: 0.7; }
 
-  /* Empty state */
-  .empty { text-align: center; color: #1e3a52; font-size: 13px; padding: 30px 0; }
+/* Modal */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 150;
+  background: rgba(0,0,0,0.6); backdrop-filter: blur(10px);
+  display: flex; align-items: flex-end; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity 0.25s;
+}
+.modal-overlay.show { opacity: 1; pointer-events: all; }
+.modal-box {
+  background: var(--modal-bg); border: 1px solid var(--border);
+  border-radius: 22px 22px 0 0; padding: 22px 18px 40px;
+  width: 100%; max-width: 480px;
+  transform: translateY(100%); transition: transform 0.3s ease;
+}
+.modal-overlay.show .modal-box { transform: translateY(0); }
+.modal-title { font-size: 16px; font-weight: 800; margin-bottom: 4px; font-family: 'Syne', sans-serif; }
+.modal-sub { font-size: 12px; color: var(--muted); margin-bottom: 14px; }
+.modal-textarea {
+  width: 100%; background: var(--input-bg); border: 1px solid rgba(0,200,100,0.25);
+  border-radius: 12px; padding: 12px 13px; color: var(--text); font-size: 14px;
+  resize: none; outline: none; margin-bottom: 13px; font-family: 'DM Sans', sans-serif; line-height: 1.5;
+}
+.modal-textarea::placeholder { color: var(--muted); opacity: 0.6; }
+.modal-btns { display: flex; gap: 10px; }
+.btn-cancel { flex:1; padding:13px; background:var(--card-bg); border:1px solid var(--border); border-radius:12px; color:var(--muted); font-weight:700; cursor:pointer; font-size:13px; font-family:'DM Sans',sans-serif; }
+.btn-off { flex:2; padding:13px; background:linear-gradient(135deg,#ff4444,#cc1111); border:none; border-radius:12px; color:#fff; font-weight:800; cursor:pointer; font-size:13px; font-family:'DM Sans',sans-serif; }
 
-  @keyframes glow-pulse {
-    0%, 100% { transform: scale(1); opacity: 0.6; }
-    50% { transform: scale(1.12); opacity: 1; }
-  }
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(8px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  .fade-in { animation: fadeIn 0.3s ease forwards; }
+/* Footer */
+.footer {
+  position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+  width: 100%; max-width: 480px; z-index: 50;
+  background: var(--header-bg); backdrop-filter: blur(16px);
+  border-top: 1px solid var(--border);
+  text-align: center; padding: 8px 16px;
+  font-size: 10px; color: var(--muted); letter-spacing: 1px;
+  font-family: 'Syne', sans-serif;
+}
 
-  input[type=number]::-webkit-outer-spin-button,
-  input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
+/* Empty */
+.empty { text-align: center; color: var(--muted); opacity: 0.4; font-size: 13px; padding: 28px 0; }
+
+@keyframes glow-pulse { 0%,100%{transform:scale(1);opacity:.6} 50%{transform:scale(1.12);opacity:1} }
+@keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+.fade-in { animation: fadeIn 0.3s ease forwards; }
+
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
 </style>
 </head>
 <body>
 <div class="bg-glow"></div>
-<div id="app">
+
+<!-- PIN SCREEN -->
+<div id="pinScreen">
+  <div class="pin-ticker">
+    <div class="pin-ticker-inner">
+      &nbsp;&nbsp;&nbsp;🚗 GRAB DRIVER INCOME TRACKER &nbsp;•&nbsp; © Gentara Anugrah &nbsp;•&nbsp; 🚗 GRAB DRIVER INCOME TRACKER &nbsp;•&nbsp; © Gentara Anugrah &nbsp;•&nbsp; 🚗 GRAB DRIVER INCOME TRACKER &nbsp;•&nbsp; © Gentara Anugrah &nbsp;&nbsp;&nbsp;
+    </div>
+  </div>
+  <div class="pin-wrap">
+    <div class="pin-logo"><span class="pin-logo-text">GT</span></div>
+    <div class="pin-badge">ACCESS CONTROL SYSTEM</div>
+    <div class="pin-title" id="pinTitle">Income Tracker</div>
+    <div class="pin-sub" id="pinSub">Masukkan <span>PIN 6 digit</span> untuk akses</div>
+    <div class="pin-mode-tabs">
+      <button class="pin-mode-tab active" id="tabMasuk" onclick="setPinMode('masuk')">MASUK</button>
+      <button class="pin-mode-tab inactive" id="tabGanti" onclick="setPinMode('ganti')">GANTI PIN</button>
+    </div>
+    <div class="pin-dots" id="pinDots">
+      <div class="pin-dot" id="d0"></div>
+      <div class="pin-dot" id="d1"></div>
+      <div class="pin-dot" id="d2"></div>
+      <div class="pin-dot" id="d3"></div>
+      <div class="pin-dot" id="d4"></div>
+      <div class="pin-dot" id="d5"></div>
+    </div>
+    <div class="pin-error" id="pinError"></div>
+    <div class="pin-grid">
+      <button class="pin-key" onclick="pinKey('1')">1</button>
+      <button class="pin-key" onclick="pinKey('2')">2</button>
+      <button class="pin-key" onclick="pinKey('3')">3</button>
+      <button class="pin-key" onclick="pinKey('4')">4</button>
+      <button class="pin-key" onclick="pinKey('5')">5</button>
+      <button class="pin-key" onclick="pinKey('6')">6</button>
+      <button class="pin-key" onclick="pinKey('7')">7</button>
+      <button class="pin-key" onclick="pinKey('8')">8</button>
+      <button class="pin-key" onclick="pinKey('9')">9</button>
+      <button class="pin-key empty"></button>
+      <button class="pin-key" onclick="pinKey('0')">0</button>
+      <button class="pin-key del" onclick="pinDel()">⌫ Hapus</button>
+    </div>
+    <div class="pin-footer-note">© Gentara Anugrah • Grab Driver Income Tracker</div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app" style="display:none">
+  <!-- Ticker -->
+  <div class="ticker-wrap">
+    <div class="ticker-inner">
+      🚗 GRAB DRIVER INCOME TRACKER &nbsp;•&nbsp; © Gentara Anugrah &nbsp;•&nbsp; 🚗 GRAB DRIVER INCOME TRACKER &nbsp;•&nbsp; © Gentara Anugrah &nbsp;•&nbsp; 🚗 GRAB DRIVER INCOME TRACKER &nbsp;•&nbsp; © Gentara Anugrah &nbsp;•&nbsp; 🚗 GRAB DRIVER INCOME TRACKER &nbsp;•&nbsp; © Gentara Anugrah &nbsp;&nbsp;
+    </div>
+  </div>
+
   <!-- Header -->
   <div class="header">
     <div class="header-top">
       <div class="header-brand">
-        <span class="brand-label">Grab Driver</span>
-        <span class="brand-title">Income Tracker</span>
+        <div class="brand-label">Grab Driver</div>
+        <div class="brand-title">Income Tracker</div>
       </div>
-      <div class="header-clock">
-        <div class="clock-date" id="clockDate"></div>
-        <div class="clock-time" id="clockTime"></div>
+      <div class="header-right">
+        <div class="header-clock">
+          <div class="clock-date" id="clockDate"></div>
+          <div class="clock-time" id="clockTime"></div>
+        </div>
+        <button class="theme-btn" onclick="toggleTheme()" id="themeBtn">🌙 Dark</button>
       </div>
     </div>
     <div class="tabs">
@@ -287,8 +476,9 @@
     </div>
   </div>
 
-  <!-- Content -->
   <div class="content" id="content"></div>
+
+  <div class="footer">© Gentara Anugrah All Rights Reserved &nbsp;•&nbsp; Grab Driver Income Tracker</div>
 </div>
 
 <!-- OFF Modal -->
@@ -309,89 +499,160 @@
 const TARGET_DAILY = 150000;
 const TARGET_WEEKLY = 900000;
 const TARGET_MONTHLY = 3900000;
+const BBM_COST = 20000;
+const DEFAULT_PIN = '700115';
 const DAYS = ['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
 const MONTHS = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 
-// ============ STATE ============
+// ============ PIN STATE ============
+let pinInput = '';
+let pinMode = 'masuk'; // masuk | ganti_old | ganti_new | ganti_confirm
+let pinNewTemp = '';
+let storedPin = localStorage.getItem('grab_pin') || DEFAULT_PIN;
+
+function setPinMode(mode) {
+  pinMode = mode === 'ganti' ? 'ganti_old' : 'masuk';
+  pinInput = ''; pinNewTemp = '';
+  document.getElementById('tabMasuk').className = 'pin-mode-tab ' + (mode==='masuk'?'active':'inactive');
+  document.getElementById('tabGanti').className = 'pin-mode-tab ' + (mode==='ganti'?'active':'inactive');
+  updatePinSub(); updatePinDots(); clearPinError();
+}
+function updatePinSub() {
+  const el = document.getElementById('pinSub');
+  if (pinMode === 'masuk') el.innerHTML = 'Masukkan <span>PIN 6 digit</span> untuk akses';
+  else if (pinMode === 'ganti_old') el.innerHTML = 'Masukkan <span>PIN lama</span> dulu';
+  else if (pinMode === 'ganti_new') el.innerHTML = 'Masukkan <span>PIN baru</span> 6 digit';
+  else if (pinMode === 'ganti_confirm') el.innerHTML = '<span>Ulangi PIN baru</span> untuk konfirmasi';
+}
+function updatePinDots() {
+  for (let i = 0; i < 6; i++) {
+    document.getElementById('d'+i).className = 'pin-dot' + (i < pinInput.length ? ' filled' : '');
+  }
+}
+function clearPinError() { document.getElementById('pinError').textContent = ''; }
+function showPinError(msg) { document.getElementById('pinError').textContent = msg; }
+
+function pinKey(k) {
+  if (pinInput.length >= 6) return;
+  pinInput += k;
+  updatePinDots();
+  clearPinError();
+  if (pinInput.length === 6) setTimeout(checkPin, 150);
+}
+function pinDel() {
+  pinInput = pinInput.slice(0,-1);
+  updatePinDots(); clearPinError();
+}
+function checkPin() {
+  if (pinMode === 'masuk') {
+    if (pinInput === storedPin) { enterApp(); }
+    else { showPinError('PIN salah, coba lagi'); pinInput=''; updatePinDots(); }
+  } else if (pinMode === 'ganti_old') {
+    if (pinInput === storedPin) { pinMode='ganti_new'; pinInput=''; updatePinDots(); updatePinSub(); clearPinError(); }
+    else { showPinError('PIN lama salah'); pinInput=''; updatePinDots(); }
+  } else if (pinMode === 'ganti_new') {
+    pinNewTemp = pinInput; pinMode='ganti_confirm'; pinInput=''; updatePinDots(); updatePinSub();
+  } else if (pinMode === 'ganti_confirm') {
+    if (pinInput === pinNewTemp) {
+      storedPin = pinInput; localStorage.setItem('grab_pin', storedPin);
+      showPinError('✅ PIN berhasil diganti!');
+      setTimeout(() => { setPinMode('masuk'); }, 1200);
+    } else { showPinError('PIN tidak cocok, ulangi dari awal'); pinMode='ganti_new'; pinNewTemp=''; pinInput=''; updatePinDots(); updatePinSub(); }
+  }
+}
+function enterApp() {
+  document.getElementById('pinScreen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  render(); startClock();
+}
+
+// ============ THEME ============
+let isDark = true;
+function toggleTheme() {
+  isDark = !isDark;
+  document.body.className = isDark ? '' : 'light';
+  document.getElementById('pinScreen').className = isDark ? '' : 'light';
+  document.getElementById('themeBtn').textContent = isDark ? '🌙 Dark' : '☀️ Light';
+  localStorage.setItem('grab_theme', isDark ? 'dark' : 'light');
+}
+// Load theme
+const savedTheme = localStorage.getItem('grab_theme');
+if (savedTheme === 'light') { isDark = false; document.body.className = 'light'; document.getElementById('pinScreen').className = 'light'; }
+
+// ============ APP STATE ============
 let currentTab = 'today';
 let isOn = false;
 let currentOnTime = null;
-let sessions = []; // [{onTime, offTime, note, duration}]
+let sessions = [];
 let savedIncome = null;
+let savedNote = '';
 let allDays = [];
 let showIncomeInput = false;
-let clockInterval = null;
 
 // ============ STORAGE ============
 function load() {
   try {
-    const d = JSON.parse(localStorage.getItem('grab_tracker_v2') || '{}');
+    const d = JSON.parse(localStorage.getItem('grab_tracker_v3') || '{}');
     allDays = d.allDays || [];
     const todayData = allDays.find(x => x.date === todayKey());
     if (todayData) {
       sessions = todayData.sessions || [];
       savedIncome = todayData.income ?? null;
+      savedNote = todayData.note || '';
     }
   } catch(e) {}
 }
 function save() {
   try {
-    const updated = upsertDay(allDays, todayKey(), { sessions, income: savedIncome });
+    const updated = upsertDay(allDays, todayKey(), { sessions, income: savedIncome, note: savedNote });
     allDays = updated;
-    localStorage.setItem('grab_tracker_v2', JSON.stringify({ allDays }));
+    localStorage.setItem('grab_tracker_v3', JSON.stringify({ allDays }));
   } catch(e) {}
 }
 function upsertDay(days, key, patch) {
   const idx = days.findIndex(d => d.date === key);
-  if (idx >= 0) {
-    const copy = [...days];
-    copy[idx] = { ...copy[idx], ...patch };
-    return copy;
-  }
-  return [...days, { date: key, income: null, sessions: [], ...patch }];
+  if (idx >= 0) { const c=[...days]; c[idx]={...c[idx],...patch}; return c; }
+  return [...days, { date:key, income:null, sessions:[], note:'', libur:false, ...patch }];
 }
 function todayKey() { return new Date().toDateString(); }
+function getDay(key) { return allDays.find(d => d.date === key) || { date:key, income:null, sessions:[], note:'', libur:false }; }
 
 // ============ FORMATTING ============
 function fRp(val) { return 'Rp ' + Math.round(val).toLocaleString('id-ID'); }
-function fTime(d) { return d.toLocaleTimeString('id-ID', {hour:'2-digit',minute:'2-digit',second:'2-digit'}); }
-function fTimeShort(d) { return new Date(d).toLocaleTimeString('id-ID', {hour:'2-digit',minute:'2-digit'}); }
-function fDuration(ms) {
-  const s = Math.floor(ms/1000), h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = s%60;
-  return `${pad(h)}:${pad(m)}:${pad(sec)}`;
-}
+function fTime(d) { return d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',second:'2-digit'}); }
+function fTimeShort(ts) { return new Date(ts).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}); }
+function fDuration(ms) { const s=Math.floor(ms/1000),h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60; return `${pad(h)}:${pad(m)}:${pad(sec)}`; }
 function pad(n) { return String(n).padStart(2,'0'); }
-function fDate(d) {
-  return d.toLocaleDateString('id-ID', {weekday:'long',day:'numeric',month:'long',year:'numeric'});
-}
-function pct(val, target) { return Math.min(100, Math.round((val/target)*100)); }
+function pct(val,target) { return Math.min(100,Math.round((val/target)*100)); }
 
 // ============ TIME ============
 function totalMs() {
-  const completedMs = sessions.reduce((a,s) => a + (s.duration||0), 0);
-  const liveMs = isOn && currentOnTime ? (Date.now() - currentOnTime) : 0;
-  return completedMs + liveMs;
+  const c = sessions.reduce((a,s)=>a+(s.duration||0),0);
+  const l = isOn && currentOnTime ? (Date.now()-currentOnTime) : 0;
+  return c + l;
 }
 
 // ============ CLOCK ============
-function updateClock() {
+let clockInt = null;
+function startClock() {
+  if (clockInt) clearInterval(clockInt);
+  clockInt = setInterval(tickClock, 1000);
+  tickClock();
+}
+function tickClock() {
   const now = new Date();
-  document.getElementById('clockDate').textContent = fDate(now).split(',')[0];
-  document.getElementById('clockTime').textContent = fTime(now);
-  // Update live elements
-  const timerEl = document.getElementById('liveTimer');
-  if (timerEl) timerEl.textContent = fDuration(totalMs());
-  const liveDur = document.getElementById('liveDur');
-  if (liveDur && isOn && currentOnTime) liveDur.textContent = fDuration(Date.now() - currentOnTime);
-  // Update earning rate if income saved
-  if (savedIncome && totalMs() > 0) {
-    const ms = totalMs();
-    const perH = document.getElementById('rateHour');
-    const perM = document.getElementById('rateMin');
-    const perS = document.getElementById('rateSec');
-    if (perH) perH.textContent = fRp(savedIncome / (ms/3600000));
-    if (perM) perM.textContent = fRp(savedIncome / (ms/60000));
-    if (perS) perS.textContent = fRp(savedIncome / (ms/1000));
+  const dateEl = document.getElementById('clockDate');
+  const timeEl = document.getElementById('clockTime');
+  if (dateEl) dateEl.textContent = DAYS[now.getDay()] + ', ' + now.getDate() + ' ' + MONTHS[now.getMonth()];
+  if (timeEl) timeEl.textContent = fTime(now);
+  const ms = totalMs();
+  const t = document.getElementById('liveTimer'); if(t) t.textContent = fDuration(ms);
+  const ld = document.getElementById('liveDur'); if(ld && isOn && currentOnTime) ld.textContent = fDuration(Date.now()-currentOnTime);
+  if (savedIncome && ms > 0) {
+    const rH=document.getElementById('rateHour'), rM=document.getElementById('rateMin'), rS=document.getElementById('rateSec');
+    if(rH) rH.textContent = fRp(savedIncome/(ms/3600000));
+    if(rM) rM.textContent = fRp(savedIncome/(ms/60000));
+    if(rS) rS.textContent = fRp(savedIncome/(ms/1000));
   }
 }
 
@@ -399,94 +660,110 @@ function updateClock() {
 function switchTab(tab) {
   currentTab = tab;
   document.querySelectorAll('.tab').forEach((t,i) => {
-    const tabs = ['today','week','month'];
-    t.className = 'tab ' + (tabs[i] === tab ? 'active' : 'inactive');
+    t.className = 'tab ' + (['today','week','month'][i]===tab?'active':'inactive');
   });
   render();
 }
 
 // ============ ACTIONS ============
 function toggleOnOff() {
-  if (!isOn) {
-    isOn = true;
-    currentOnTime = Date.now();
-    render();
-  } else {
-    document.getElementById('offModal').classList.add('show');
-    document.getElementById('offNote').value = '';
-    setTimeout(() => document.getElementById('offNote').focus(), 200);
-  }
+  if (!isOn) { isOn=true; currentOnTime=Date.now(); render(); }
+  else { document.getElementById('offModal').classList.add('show'); document.getElementById('offNote').value=''; setTimeout(()=>document.getElementById('offNote').focus(),200); }
 }
 function closeModal() { document.getElementById('offModal').classList.remove('show'); }
-function modalBgClick(e) { if (e.target === document.getElementById('offModal')) closeModal(); }
+function modalBgClick(e) { if(e.target===document.getElementById('offModal')) closeModal(); }
 function confirmOff() {
   const note = document.getElementById('offNote').value.trim() || 'Selesai';
   const offTime = Date.now();
-  const duration = offTime - currentOnTime;
-  sessions.push({ onTime: currentOnTime, offTime, note, duration });
-  isOn = false; currentOnTime = null;
-  closeModal(); save(); render();
+  sessions.push({ onTime:currentOnTime, offTime, note, duration:offTime-currentOnTime });
+  isOn=false; currentOnTime=null; closeModal(); save(); render();
 }
-function openIncomeInput() { showIncomeInput = true; render(); setTimeout(() => document.getElementById('incomeInput')?.focus(), 100); }
-function closeIncomeInput() { showIncomeInput = false; render(); }
+function openIncomeInput() { showIncomeInput=true; render(); setTimeout(()=>document.getElementById('incomeInput')?.focus(),100); }
+function closeIncomeInput() { showIncomeInput=false; render(); }
 function saveIncome() {
-  const val = parseInt((document.getElementById('incomeInput')?.value||'').replace(/\D/g,''), 10);
-  if (!isNaN(val) && val > 0) {
-    savedIncome = val; showIncomeInput = false; save(); render();
+  const val = parseInt((document.getElementById('incomeInput')?.value||'').replace(/\D/g,''),10);
+  if (!isNaN(val) && val>0) { savedIncome=val; showIncomeInput=false; save(); render(); }
+}
+function incomeKeydown(e) { if(e.key==='Enter') saveIncome(); }
+function saveNote() {
+  savedNote = document.getElementById('noteInput')?.value || '';
+  save();
+}
+
+// ============ PAST INCOME ============
+let editingDayKey = null;
+function canEditDay(dateKey) {
+  const maxBack = new Date(); maxBack.setDate(maxBack.getDate()-2); maxBack.setHours(0,0,0,0);
+  return new Date(dateKey) >= maxBack && new Date(dateKey) <= new Date();
+}
+function openIncomeForDay(dateKey) {
+  if (dateKey === todayKey()) { switchTab('today'); showIncomeInput=true; render(); setTimeout(()=>document.getElementById('incomeInput')?.focus(),100); return; }
+  editingDayKey = dateKey; render();
+  setTimeout(()=>document.getElementById('pastInp_'+dateKey)?.focus(),150);
+}
+function savePastIncome(dateKey) {
+  const el = document.getElementById('pastInp_'+dateKey);
+  const val = parseInt((el?.value||'').replace(/\D/g,''),10);
+  if (!isNaN(val) && val>0) {
+    const existing = getDay(dateKey);
+    allDays = upsertDay(allDays, dateKey, {...existing, income:val});
+    localStorage.setItem('grab_tracker_v3', JSON.stringify({allDays}));
+    editingDayKey = null; render();
   }
 }
-function incomeKeydown(e) { if (e.key === 'Enter') saveIncome(); }
+function cancelPastIncome() { editingDayKey=null; render(); }
+
+// ============ LIBUR ============
+function toggleLibur(dateKey) {
+  const now = new Date();
+  const maxBack = new Date(); maxBack.setDate(maxBack.getDate()-2);
+  const target = new Date(dateKey);
+  if (target < maxBack) return;
+  const existing = getDay(dateKey);
+  const updated = upsertDay(allDays, dateKey, { ...existing, libur: !existing.libur });
+  allDays = updated;
+  localStorage.setItem('grab_tracker_v3', JSON.stringify({ allDays }));
+  if (dateKey === todayKey()) { /* refresh today state */ }
+  render();
+}
+function canToggleLibur(dateKey) {
+  const maxBack = new Date(); maxBack.setDate(maxBack.getDate()-2);
+  return new Date(dateKey) >= maxBack && new Date(dateKey) <= new Date();
+}
 
 // ============ DATA ============
 function getWeekDays() {
   const days = [];
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date(); d.setDate(d.getDate() - i);
-    const key = d.toDateString();
-    const found = allDays.find(x => x.date === key);
-    days.push({ date: d, key, income: found?.income || 0, sessions: found?.sessions || [] });
-  }
+  for (let i=6;i>=0;i--) { const d=new Date(); d.setDate(d.getDate()-i); const key=d.toDateString(); const dayData=getDay(key); days.push({...dayData, date:d, key}); }
   return days;
 }
 function getMonthDays() {
-  const now = new Date();
-  return allDays.filter(d => {
-    const dd = new Date(d.date);
-    return dd.getMonth() === now.getMonth() && dd.getFullYear() === now.getFullYear();
-  });
+  const now=new Date();
+  return allDays.filter(d=>{ const dd=new Date(d.date); return dd.getMonth()===now.getMonth()&&dd.getFullYear()===now.getFullYear(); });
 }
 
 // ============ RENDER ============
-function render() {
-  const content = document.getElementById('content');
-  if (currentTab === 'today') content.innerHTML = renderToday();
-  else if (currentTab === 'week') content.innerHTML = renderWeek();
-  else content.innerHTML = renderMonth();
-}
+function render() { const c=document.getElementById('content'); if(!c) return; if(currentTab==='today') c.innerHTML=renderToday(); else if(currentTab==='week') c.innerHTML=renderWeek(); else c.innerHTML=renderMonth(); }
 
 function renderToday() {
-  const ms = totalMs();
-  const liveMs = isOn && currentOnTime ? (Date.now() - currentOnTime) : 0;
-  const todayIncome = savedIncome || 0;
-  const dp = pct(todayIncome, TARGET_DAILY);
-  const perH = ms > 0 && savedIncome ? fRp(savedIncome / (ms/3600000)) : '-';
-  const perM = ms > 0 && savedIncome ? fRp(savedIncome / (ms/60000)) : '-';
-  const perS = ms > 0 && savedIncome ? fRp(savedIncome / (ms/1000)) : '-';
+  const ms=totalMs(), liveMs=isOn&&currentOnTime?(Date.now()-currentOnTime):0;
+  const income=savedIncome||0, dp=pct(income,TARGET_DAILY);
+  const bersih=income-BBM_COST;
+  const perH=ms>0&&savedIncome?fRp(savedIncome/(ms/3600000)):'-';
+  const perM=ms>0&&savedIncome?fRp(savedIncome/(ms/60000)):'-';
+  const perS=ms>0&&savedIncome?fRp(savedIncome/(ms/1000)):'-';
+  const todayData=getDay(todayKey());
+  const isLibur=todayData.libur||false;
 
-  return `
-  <div class="fade-in">
+  return `<div class="fade-in">
     <!-- ON/OFF -->
     <div class="onoff-wrap">
       <button class="onoff-btn ${isOn?'on':'off'}" onclick="toggleOnOff()">
-        <span class="onoff-icon">${isOn ? '🟢' : '⭕'}</span>
-        <span class="onoff-label">${isOn ? 'ON' : 'OFF'}</span>
+        <span class="onoff-icon">${isOn?'🟢':'⭕'}</span>
+        <span class="onoff-label">${isOn?'ON':'OFF'}</span>
       </button>
-      ${isOn && currentOnTime ? `
-        <div class="onoff-since">
-          <div class="since-label">Mulai Sejak</div>
-          <div class="since-time">${fTimeShort(currentOnTime)}</div>
-        </div>` : ''}
-      ${!isOn && sessions.length === 0 ? `<div style="font-size:12px;color:var(--muted)">Tap untuk mulai kerja</div>` : ''}
+      ${isOn&&currentOnTime?`<div class="onoff-since"><div class="since-label">Mulai Sejak</div><div class="since-time">${fTimeShort(currentOnTime)}</div></div>`:''}
+      ${!isOn&&sessions.length===0?`<div style="font-size:12px;color:var(--muted)">Tap untuk mulai kerja</div>`:''}
     </div>
 
     <!-- Timer -->
@@ -496,34 +773,33 @@ function renderToday() {
     </div>
 
     <!-- Sessions -->
-    ${sessions.length > 0 || isOn ? `
-    <div style="margin-bottom:14px">
+    ${sessions.length>0||isOn?`
+    <div style="margin-bottom:12px">
       <div class="section-title">Log Sesi Hari Ini</div>
       <div class="session-list">
-        ${sessions.map(s => `
+        ${sessions.map(s=>`
           <div class="session-item">
             <div>
               <div class="session-time">${fTimeShort(s.onTime)} → ${fTimeShort(s.offTime)}</div>
               <div class="session-note">OFF: ${s.note}</div>
             </div>
             <div class="session-dur">${fDuration(s.duration)}</div>
-          </div>
-        `).join('')}
-        ${isOn && currentOnTime ? `
+          </div>`).join('')}
+        ${isOn&&currentOnTime?`
           <div class="session-item live">
             <div>
               <div class="session-time live">${fTimeShort(currentOnTime)} → sekarang</div>
               <div class="session-note live">🟢 Sedang berjalan</div>
             </div>
             <div class="session-dur" id="liveDur">${fDuration(liveMs)}</div>
-          </div>` : ''}
+          </div>`:''}
       </div>
-    </div>` : ''}
+    </div>`:''}
 
     <!-- Income -->
     <div class="card card-gold">
       <div class="card-label label-gold">Penghasilan Hari Ini</div>
-      ${savedIncome ? `
+      ${savedIncome?`
         <div class="big-num num-gold">${fRp(savedIncome)}</div>
         <div class="progress-wrap">
           <div class="progress-meta">
@@ -531,112 +807,129 @@ function renderToday() {
             <span class="progress-pct" style="color:${dp>=100?'var(--green)':'var(--gold)'}">${dp}%</span>
           </div>
           <div class="progress-track"><div class="progress-fill ${dp>=100?'fill-green':'fill-gold'}" style="width:${dp}%"></div></div>
-          <div class="progress-note ${dp>=100?'success':''}">${dp>=100 ? '🎉 Target tercapai!' : 'Kurang ' + fRp(TARGET_DAILY - savedIncome)}</div>
+          <div class="progress-note ${dp>=100?'success':''}">${dp>=100?'🎉 Target tercapai!':'Kurang '+fRp(TARGET_DAILY-savedIncome)}</div>
         </div>
         <button class="btn-outline-gold" onclick="openIncomeInput()">Edit Penghasilan</button>
-      ` : `
-        <div style="font-size:13px;color:var(--muted);margin-bottom:12px">Belum ada input penghasilan hari ini</div>
-        ${!showIncomeInput ? `<button class="btn btn-primary" onclick="openIncomeInput()">+ Input Penghasilan</button>` : ''}
+      `:`
+        <div style="font-size:13px;color:var(--muted);margin-bottom:11px">Belum ada input penghasilan</div>
+        ${!showIncomeInput?`<button class="btn btn-primary" onclick="openIncomeInput()">+ Input Penghasilan</button>`:''}
       `}
-      ${showIncomeInput ? `
-        <div style="margin-top:12px">
-          <div style="font-size:11px;color:var(--gold);margin-bottom:6px">Masukkan total penghasilan bersih (Rp):</div>
+      ${showIncomeInput?`
+        <div style="margin-top:10px">
+          <div style="font-size:11px;color:var(--gold);margin-bottom:6px">Total penghasilan bersih (Rp):</div>
           <div class="income-input-wrap">
             <input class="income-input" type="number" id="incomeInput" placeholder="150000" onkeydown="incomeKeydown(event)"/>
             <button class="btn btn-gold" onclick="saveIncome()">Simpan</button>
             <button class="btn btn-ghost" onclick="closeIncomeInput()">✕</button>
           </div>
-        </div>` : ''}
+        </div>`:''}
     </div>
 
+    <!-- BBM -->
+    ${savedIncome?`
+    <div class="card card-red">
+      <div class="card-label label-red">⛽ Kalkulator BBM</div>
+      <div class="bbm-row"><span class="bbm-label">Penghasilan</span><span class="bbm-val">${fRp(savedIncome)}</span></div>
+      <div class="bbm-row"><span class="bbm-label">Biaya BBM</span><span class="bbm-val" style="color:#ff6060">- ${fRp(BBM_COST)}</span></div>
+      <div class="bbm-divider"></div>
+      <div class="bbm-row"><span class="bbm-label" style="font-weight:700">Bersih setelah BBM</span><span class="bbm-val" style="color:var(--green);font-size:16px">${fRp(bersih)}</span></div>
+    </div>`:''}
+
     <!-- Earning Rate -->
-    ${savedIncome && ms > 0 ? `
-    <div style="margin-bottom:14px">
+    ${savedIncome&&ms>0?`
+    <div style="margin-bottom:12px">
       <div class="section-title">Earning Rate</div>
       <div class="rate-grid">
-        <div class="rate-card">
-          <div class="rate-label">Per Jam</div>
-          <div class="rate-val" style="font-size:14px" id="rateHour">${perH}</div>
-        </div>
-        <div class="rate-card">
-          <div class="rate-label">Per Menit</div>
-          <div class="rate-val" style="font-size:12px" id="rateMin">${perM}</div>
-        </div>
-        <div class="rate-card">
-          <div class="rate-label">Per Detik</div>
-          <div class="rate-val" style="font-size:11px" id="rateSec">${perS}</div>
-        </div>
+        <div class="rate-card"><div class="rate-label">Per Jam</div><div class="rate-val" style="font-size:13px" id="rateHour">${perH}</div></div>
+        <div class="rate-card"><div class="rate-label">Per Menit</div><div class="rate-val" style="font-size:12px" id="rateMin">${perM}</div></div>
+        <div class="rate-card"><div class="rate-label">Per Detik</div><div class="rate-val" style="font-size:11px" id="rateSec">${perS}</div></div>
       </div>
-    </div>` : ''}
+    </div>`:''}
+
+    <!-- Catatan Harian -->
+    <div class="card">
+      <div class="card-label label-muted">📝 Catatan Hari Ini</div>
+      <textarea class="notes-input" id="noteInput" rows="2" placeholder="Area, kondisi, cuaca, dll..." onblur="saveNote()">${savedNote}</textarea>
+    </div>
+
+    <!-- Hari Libur -->
+    <div style="margin-bottom:12px">
+      <button class="libur-btn ${isLibur?'active':''}" onclick="toggleLibur('${todayKey()}')">
+        ${isLibur?'✅ Hari Ini Ditandai Libur — Tap untuk Batalkan':'🏖️ Tandai Hari Ini sebagai Libur'}
+      </button>
+    </div>
   </div>`;
 }
 
 function renderWeek() {
-  const weekDays = getWeekDays();
-  const weekTotal = weekDays.reduce((a,d) => a+(d.income||0), 0);
-  const wp = pct(weekTotal, TARGET_WEEKLY);
-  const tKey = todayKey();
+  const weekDays=getWeekDays();
+  const tKey=todayKey();
+  const workDays=weekDays.filter(d=>!d.libur);
+  const weekTotal=workDays.reduce((a,d)=>a+(d.income||0),0);
+  const wp=pct(weekTotal,TARGET_WEEKLY);
 
-  return `
-  <div class="fade-in">
+  return `<div class="fade-in">
     <div class="card card-green">
       <div class="card-label label-green">Total Minggu Ini</div>
       <div class="big-num num-green">${fRp(weekTotal)}</div>
       <div class="progress-wrap">
-        <div class="progress-meta">
-          <span>Target: ${fRp(TARGET_WEEKLY)}</span>
-          <span class="progress-pct" style="color:${wp>=100?'var(--green)':'var(--gold)'}">${wp}%</span>
-        </div>
+        <div class="progress-meta"><span>Target: ${fRp(TARGET_WEEKLY)}</span><span class="progress-pct" style="color:${wp>=100?'var(--green)':'var(--gold)'}">${wp}%</span></div>
         <div class="progress-track"><div class="progress-fill fill-green" style="width:${wp}%"></div></div>
-        <div class="progress-note ${wp>=100?'success':''}">${wp>=100 ? '🎉 Target minggu ini tercapai!' : 'Kurang ' + fRp(TARGET_WEEKLY - weekTotal)}</div>
+        <div class="progress-note ${wp>=100?'success':''}">${wp>=100?'🎉 Target minggu ini tercapai!':'Kurang '+fRp(TARGET_WEEKLY-weekTotal)}</div>
       </div>
     </div>
-
     <div class="section-title">Rincian Per Hari</div>
-    ${weekDays.map(d => {
-      const isToday = d.key === tKey;
-      const p = pct(d.income, TARGET_DAILY);
-      const color = p >= 100 ? 'var(--green)' : '#ffd700';
-      return `
-      <div class="day-item ${isToday?'today':''}">
+    ${weekDays.map(d=>{
+      const isToday=d.key===tKey, p=pct(d.income||0,TARGET_DAILY), canToggle=canToggleLibur(d.key);
+      const canEdit=canEditDay(d.key), isEditing=editingDayKey===d.key;
+      const color=p>=100?'var(--green)':'#ffd700';
+      return `<div class="day-item ${isToday?'today':''} ${d.libur?'libur':''}">
         <div class="day-row">
           <div class="day-name ${isToday?'today':''}">
             ${DAYS[d.date.getDay()]}, ${d.date.getDate()} ${MONTHS[d.date.getMonth()]}
-            ${isToday ? '<span class="day-badge">HARI INI</span>' : ''}
+            ${isToday?'<span class="day-badge">HARI INI</span>':''}
+            ${d.libur?'<span class="day-badge libur-badge">LIBUR</span>':''}
           </div>
-          <div class="day-income" style="color:${d.income>0?color:'#1e3a52'}">${d.income>0?fRp(d.income):'-'}</div>
+          <div class="day-income" style="color:${d.libur?'var(--muted)':(d.income>0?color:'#888')}">${d.libur?'Libur':(d.income>0?fRp(d.income):'-')}</div>
         </div>
-        ${d.income>0 ? `
-          <div class="day-bar">
-            <div class="day-bar-fill" style="width:${p}%;background:${p>=100?'var(--green)':'linear-gradient(90deg,#ffc800,#ff9500)'}"></div>
-          </div>` : ''}
+        ${d.income>0&&!d.libur?`<div class="day-bar"><div class="day-bar-fill" style="width:${p}%;background:${p>=100?'var(--green)':'linear-gradient(90deg,#ffc800,#ff9500)'}"></div></div>`:''}
+        ${isEditing?`
+          <div style="margin-top:10px">
+            <div style="font-size:11px;color:var(--gold);margin-bottom:6px">Penghasilan bersih (Rp):</div>
+            <div class="income-input-wrap">
+              <input class="income-input" type="number" id="pastInp_${d.key}" placeholder="150000" style="font-size:14px"/>
+              <button class="btn btn-gold" onclick="savePastIncome('${d.key}')">Simpan</button>
+              <button class="btn btn-ghost" onclick="cancelPastIncome()">✕</button>
+            </div>
+          </div>`:
+          canEdit&&!d.libur?`<button class="btn-outline-gold" style="margin-top:8px;font-size:11px;display:block" onclick="openIncomeForDay('${d.key}')">
+            ${d.income>0?'✏️ Edit Penghasilan':'💰 Input Penghasilan'}
+          </button>`:''}
+        ${canToggle?`<button class="libur-btn ${d.libur?'active':''}" style="margin-top:6px;font-size:11px;padding:7px" onclick="toggleLibur('${d.key}')">${d.libur?'✅ Libur — Batalkan':'🏖️ Tandai Libur'}</button>`:''}
       </div>`;
     }).join('')}
   </div>`;
 }
 
 function renderMonth() {
-  const now = new Date();
-  const monthDays = getMonthDays();
-  const monthTotal = monthDays.reduce((a,d) => a+(d.income||0), 0);
-  const mp = pct(monthTotal, TARGET_MONTHLY);
-  const workDays = monthDays.filter(d => d.income > 0).length;
-  const avgPerDay = workDays > 0 ? monthTotal / workDays : 0;
-  const estMonthEnd = workDays > 0 ? avgPerDay * 26 : 0;
+  const now=new Date(), monthDays=getMonthDays();
+  const workDays=monthDays.filter(d=>d.income>0&&!d.libur);
+  const monthTotal=workDays.reduce((a,d)=>a+(d.income||0),0);
+  const mp=pct(monthTotal,TARGET_MONTHLY);
+  const avg=workDays.length>0?monthTotal/workDays.length:0;
+  const est=workDays.length>0?avg*26:0;
+  const totalBBM=workDays.length*BBM_COST;
+  const bersihBulan=monthTotal-totalBBM;
 
-  return `
-  <div class="fade-in">
+  return `<div class="fade-in">
     <div class="card card-purple">
       <div class="card-label label-purple">Total ${MONTHS[now.getMonth()]} ${now.getFullYear()}</div>
       <div class="big-num num-purple">${fRp(monthTotal)}</div>
       <div class="progress-wrap">
-        <div class="progress-meta">
-          <span>Target: ${fRp(TARGET_MONTHLY)}</span>
-          <span class="progress-pct" style="color:${mp>=100?'var(--green)':'#a67fff'}">${mp}%</span>
-        </div>
+        <div class="progress-meta"><span>Target: ${fRp(TARGET_MONTHLY)}</span><span class="progress-pct" style="color:${mp>=100?'var(--green)':'#a67fff'}">${mp}%</span></div>
         <div class="progress-track"><div class="progress-fill fill-purple" style="width:${mp}%"></div></div>
         <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:5px">
-          <span>Hari kerja: ${workDays} / 26</span>
+          <span>Hari kerja: ${workDays.length} / 26</span>
           ${mp<100?`<span>Kurang ${fRp(TARGET_MONTHLY-monthTotal)}</span>`:''}
         </div>
         ${mp>=100?`<div class="progress-note success">🎉 Target bulan ini tercapai!</div>`:''}
@@ -644,45 +937,33 @@ function renderMonth() {
     </div>
 
     <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-label">Rata-rata / Hari</div>
-        <div class="stat-val" style="color:#ffd700">${fRp(avgPerDay)}</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Estimasi Akhir Bulan</div>
-        <div class="stat-val" style="color:#c4a0ff">${fRp(estMonthEnd)}</div>
-      </div>
+      <div class="stat-card"><div class="stat-label">Rata-rata / Hari</div><div class="stat-val" style="color:var(--gold)">${fRp(avg)}</div></div>
+      <div class="stat-card"><div class="stat-label">Estimasi Akhir Bulan</div><div class="stat-val" style="color:#c4a0ff">${fRp(est)}</div></div>
+      <div class="stat-card"><div class="stat-label">Total BBM Bulan Ini</div><div class="stat-val" style="color:#ff6060">- ${fRp(totalBBM)}</div></div>
+      <div class="stat-card"><div class="stat-label">Bersih Setelah BBM</div><div class="stat-val" style="color:var(--green)">${fRp(bersihBulan)}</div></div>
     </div>
 
-    ${monthDays.length > 0 ? `
+    ${monthDays.length>0?`
       <div class="section-title">Riwayat Bulan Ini</div>
-      ${[...monthDays].sort((a,b) => new Date(b.date)-new Date(a.date)).map(d => {
-        const dd = new Date(d.date);
-        const p = pct(d.income||0, TARGET_DAILY);
-        return `
-        <div class="day-item">
+      ${[...monthDays].sort((a,b)=>new Date(b.date)-new Date(a.date)).map(d=>{
+        const dd=new Date(d.date); if(isNaN(dd.getTime())) return ""; const p=pct(d.income||0,TARGET_DAILY);
+        return `<div class="day-item ${d.libur?'libur':''}">
           <div class="day-row">
-            <div class="day-name">${DAYS[dd.getDay()]}, ${dd.getDate()} ${MONTHS[dd.getMonth()]}</div>
+            <div class="day-name">${DAYS[dd.getDay()]}, ${dd.getDate()} ${MONTHS[dd.getMonth()]}${d.libur?'<span class="day-badge libur-badge">LIBUR</span>':''}</div>
             <div>
-              <div class="day-income" style="color:${p>=100?'var(--green)':'#ffd700'}">${fRp(d.income||0)}</div>
-              <div style="font-size:10px;color:var(--muted);text-align:right">${p}% target</div>
+              <div class="day-income" style="color:${d.libur?'var(--muted)':(p>=100?'var(--green)':'#ffd700')}">${d.libur?'Libur':fRp(d.income||0)}</div>
+              ${!d.libur?`<div style="font-size:10px;color:var(--muted);text-align:right">${p}% target</div>`:''}
             </div>
           </div>
-          <div class="day-bar">
-            <div class="day-bar-fill" style="width:${p}%;background:${p>=100?'var(--green)':'linear-gradient(90deg,#ffc800,#ff9500)'}"></div>
-          </div>
+          ${!d.libur&&(d.income||0)>0?`<div class="day-bar"><div class="day-bar-fill" style="width:${p}%;background:${p>=100?'var(--green)':'linear-gradient(90deg,#ffc800,#ff9500)'}"></div></div>`:''}
         </div>`;
       }).join('')}
-    ` : `<div class="empty">Belum ada data bulan ini</div>`}
+    `:`<div class="empty">Belum ada data bulan ini</div>`}
   </div>`;
 }
 
 // ============ INIT ============
 load();
-render();
-clockInterval = setInterval(updateClock, 1000);
-updateClock();
 </script>
 </body>
 </html>
-  `;
