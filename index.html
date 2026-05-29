@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Grab Tracker"/>
+<meta name="theme-color" content="#0a1628"/>
+<title>Grab Income Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --green: #00c864;
+    --green-bright: #00f07a;
+    --gold: #ffc800;
+    --blue: #0a1628;
+    --blue-mid: #0d2137;
+    --blue-light: #1a3a5c;
+    --text: #e8f4fd;
+    --muted: #4a7a9b;
+    --border: rgba(255,255,255,0.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; background: var(--blue); overflow: hidden; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text);
+    display: flex; flex-direction: column;
+    max-width: 480px; margin: 0 auto;
+    position: relative;
+  }
+
+  /* Scrollable content area */
+  #app { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+  /* Background */
+  .bg-glow {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background:
+      radial-gradient(ellipse at 15% 10%, rgba(0,200,100,0.07) 0%, transparent 55%),
+      radial-gradient(ellipse at 85% 85%, rgba(0,120,255,0.05) 0%, transparent 55%),
+      linear-gradient(160deg, #0a1628 0%, #0d2137 50%, #071a2e 100%);
+  }
+
+  /* Header */
+  .header {
+    position: relative; z-index: 10;
+    background: rgba(10,22,40,0.95);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(0,200,100,0.15);
+    padding: 14px 18px 0;
+    flex-shrink: 0;
+  }
+  .header-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+  .header-brand { display: flex; flex-direction: column; }
+  .brand-label { font-size: 10px; color: var(--green); letter-spacing: 3px; text-transform: uppercase; font-weight: 700; font-family: 'Syne', sans-serif; }
+  .brand-title { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; font-family: 'Syne', sans-serif; }
+  .header-clock { text-align: right; }
+  .clock-date { font-size: 10px; color: var(--muted); }
+  .clock-time { font-size: 19px; font-weight: 700; color: var(--green-bright); font-variant-numeric: tabular-nums; letter-spacing: 1px; }
+
+  /* Tabs */
+  .tabs { display: flex; gap: 4px; padding-bottom: 12px; }
+  .tab {
+    flex: 1; padding: 8px 0; border-radius: 8px; border: none; cursor: pointer;
+    font-weight: 700; font-size: 12px; letter-spacing: 0.3px;
+    transition: all 0.2s; font-family: 'DM Sans', sans-serif;
+  }
+  .tab.active { background: var(--green); color: #071a2e; }
+  .tab.inactive { background: rgba(255,255,255,0.06); color: var(--muted); }
+
+  /* Scrollable content */
+  .content { flex: 1; overflow-y: auto; overflow-x: hidden; position: relative; z-index: 1; padding: 18px 16px 80px; }
+  .content::-webkit-scrollbar { width: 3px; }
+  .content::-webkit-scrollbar-thumb { background: rgba(0,200,100,0.3); border-radius: 2px; }
+
+  /* Cards */
+  .card {
+    border-radius: 16px; padding: 16px 18px; margin-bottom: 14px;
+    border: 1px solid var(--border);
+    background: rgba(255,255,255,0.04);
+  }
+  .card-green { background: rgba(0,200,100,0.08); border-color: rgba(0,200,100,0.2); }
+  .card-gold { background: rgba(255,200,0,0.07); border-color: rgba(255,200,0,0.22); }
+  .card-purple { background: rgba(130,80,255,0.08); border-color: rgba(130,80,255,0.2); }
+  .card-blue { background: rgba(0,100,255,0.08); border-color: rgba(0,100,255,0.2); }
+
+  .card-label {
+    font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase;
+    font-weight: 700; margin-bottom: 6px; font-family: 'Syne', sans-serif;
+  }
+  .label-green { color: var(--green); }
+  .label-gold { color: var(--gold); }
+  .label-purple { color: #a67fff; }
+  .label-blue { color: #5b8dd9; }
+  .label-muted { color: var(--muted); }
+
+  .big-num { font-size: 32px; font-weight: 800; font-family: 'Syne', sans-serif; font-variant-numeric: tabular-nums; }
+  .num-green { color: var(--green-bright); }
+  .num-gold { color: #ffd700; }
+  .num-purple { color: #c4a0ff; }
+
+  /* Progress bar */
+  .progress-wrap { margin-top: 10px; }
+  .progress-meta { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-bottom: 5px; }
+  .progress-pct { font-weight: 700; }
+  .progress-track { height: 8px; border-radius: 4px; background: rgba(255,255,255,0.1); overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 4px; transition: width 0.6s ease; }
+  .fill-green { background: var(--green); }
+  .fill-gold { background: linear-gradient(90deg, #ffc800, #ff9500); }
+  .fill-purple { background: linear-gradient(90deg, #8250ff, #a67fff); }
+  .progress-note { font-size: 11px; color: var(--muted); margin-top: 5px; }
+  .progress-note.success { color: var(--green); font-weight: 700; }
+
+  /* ON/OFF Button */
+  .onoff-wrap { display: flex; flex-direction: column; align-items: center; margin-bottom: 20px; gap: 10px; }
+  .onoff-btn {
+    width: 130px; height: 130px; border-radius: 50%; border: none; cursor: pointer;
+    font-size: 16px; font-weight: 900; letter-spacing: 1px; text-transform: uppercase;
+    font-family: 'Syne', sans-serif;
+    transition: all 0.3s; position: relative;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  }
+  .onoff-btn.on {
+    background: linear-gradient(145deg, #00d96e 0%, #00a855 100%);
+    color: #071a2e;
+    box-shadow: 0 0 50px rgba(0,200,100,0.45), 0 4px 20px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.25);
+  }
+  .onoff-btn.off {
+    background: linear-gradient(145deg, #1a3a5c 0%, #0d2137 100%);
+    color: var(--muted);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04);
+  }
+  .onoff-btn.on::before {
+    content: ''; position: absolute; inset: -14px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(0,200,100,0.22) 0%, transparent 70%);
+    animation: glow-pulse 2s infinite;
+  }
+  .onoff-icon { font-size: 28px; line-height: 1; }
+  .onoff-label { font-size: 13px; }
+  .onoff-since { text-align: center; }
+  .since-label { font-size: 10px; color: var(--green); letter-spacing: 2px; text-transform: uppercase; }
+  .since-time { font-size: 17px; font-weight: 700; color: var(--green-bright); }
+
+  /* Timer display */
+  .timer-display { font-size: 38px; font-weight: 900; letter-spacing: 3px; font-variant-numeric: tabular-nums; font-family: 'Syne', sans-serif; }
+
+  /* Session items */
+  .session-list { display: flex; flex-direction: column; gap: 8px; }
+  .session-item {
+    background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+    border-radius: 12px; padding: 12px 14px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .session-item.live { background: rgba(0,200,100,0.08); border-color: rgba(0,200,100,0.3); }
+  .session-time { font-size: 13px; font-weight: 700; }
+  .session-time.live { color: var(--green-bright); }
+  .session-note { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .session-note.live { color: var(--green); }
+  .session-dur { font-size: 14px; font-weight: 800; color: var(--green); font-variant-numeric: tabular-nums; }
+
+  /* Earning rate grid */
+  .rate-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .rate-card {
+    background: rgba(0,100,255,0.08); border: 1px solid rgba(0,100,255,0.2);
+    border-radius: 12px; padding: 12px 8px; text-align: center;
+  }
+  .rate-label { font-size: 10px; color: #5b8dd9; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 5px; }
+  .rate-val { font-weight: 800; color: #7ab4ff; font-variant-numeric: tabular-nums; line-height: 1.2; }
+
+  /* Income input */
+  .income-input-wrap { display: flex; gap: 8px; margin-top: 12px; }
+  .income-input {
+    flex: 1; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,200,0,0.35);
+    border-radius: 10px; padding: 11px 14px; color: #ffd700; font-size: 16px;
+    font-weight: 700; outline: none; font-family: 'DM Sans', sans-serif;
+  }
+  .income-input::placeholder { color: rgba(255,200,0,0.3); }
+  .btn { border: none; border-radius: 10px; padding: 11px 16px; font-weight: 800; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 14px; transition: opacity 0.15s; }
+  .btn:active { opacity: 0.75; }
+  .btn-gold { background: var(--gold); color: #071a2e; }
+  .btn-ghost { background: rgba(255,255,255,0.08); color: var(--muted); }
+  .btn-outline-gold {
+    background: rgba(255,200,0,0.12); border: 1px solid rgba(255,200,0,0.3);
+    color: var(--gold); border-radius: 8px; padding: 6px 14px; font-size: 12px;
+    margin-top: 10px; cursor: pointer; font-weight: 700; font-family: 'DM Sans', sans-serif;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, #ffc800, #ff9500); color: #071a2e;
+    border-radius: 12px; padding: 12px 22px; font-size: 15px;
+  }
+
+  /* Week/Month day items */
+  .day-item {
+    background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+    border-radius: 12px; padding: 12px 14px; margin-bottom: 8px;
+  }
+  .day-item.today { background: rgba(0,200,100,0.09); border-color: rgba(0,200,100,0.28); }
+  .day-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .day-name { font-size: 13px; font-weight: 700; }
+  .day-name.today { color: var(--green-bright); }
+  .day-badge { font-size: 9px; color: var(--green); font-weight: 700; letter-spacing: 1px; background: rgba(0,200,100,0.15); padding: 2px 6px; border-radius: 4px; margin-left: 6px; }
+  .day-income { font-size: 15px; font-weight: 800; }
+  .day-bar { height: 4px; border-radius: 2px; background: rgba(255,255,255,0.08); overflow: hidden; }
+  .day-bar-fill { height: 100%; border-radius: 2px; transition: width 0.5s; }
+
+  /* Stats grid */
+  .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+  .stat-card {
+    background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+    border-radius: 12px; padding: 14px;
+  }
+  .stat-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+  .stat-val { font-size: 16px; font-weight: 800; font-variant-numeric: tabular-nums; }
+
+  /* Section title */
+  .section-title { font-size: 10px; color: var(--muted); letter-spacing: 2.5px; text-transform: uppercase; margin-bottom: 10px; font-family: 'Syne', sans-serif; }
+
+  /* Modal */
+  .modal-overlay {
+    position: fixed; inset: 0; z-index: 100;
+    background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(10px);
+    display: flex; align-items: flex-end; justify-content: center;
+    opacity: 0; pointer-events: none; transition: opacity 0.25s;
+  }
+  .modal-overlay.show { opacity: 1; pointer-events: all; }
+  .modal-box {
+    background: linear-gradient(180deg, #0d2137 0%, #071a2e 100%);
+    border: 1px solid rgba(0,200,100,0.18);
+    border-radius: 22px 22px 0 0; padding: 24px 20px 44px;
+    width: 100%; max-width: 480px;
+    transform: translateY(100%); transition: transform 0.3s ease;
+  }
+  .modal-overlay.show .modal-box { transform: translateY(0); }
+  .modal-title { font-size: 17px; font-weight: 800; margin-bottom: 4px; font-family: 'Syne', sans-serif; }
+  .modal-sub { font-size: 12px; color: var(--muted); margin-bottom: 16px; }
+  .modal-textarea {
+    width: 100%; background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(0,200,100,0.25); border-radius: 12px;
+    padding: 13px 14px; color: var(--text); font-size: 14px;
+    resize: none; outline: none; margin-bottom: 14px;
+    font-family: 'DM Sans', sans-serif; line-height: 1.5;
+  }
+  .modal-textarea::placeholder { color: rgba(255,255,255,0.2); }
+  .modal-btns { display: flex; gap: 10px; }
+  .btn-cancel { flex: 1; padding: 14px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: var(--muted); font-weight: 700; cursor: pointer; font-size: 14px; font-family: 'DM Sans', sans-serif; }
+  .btn-off { flex: 2; padding: 14px; background: linear-gradient(135deg, #ff4444, #cc1111); border: none; border-radius: 12px; color: #fff; font-weight: 800; cursor: pointer; font-size: 14px; font-family: 'DM Sans', sans-serif; }
+
+  /* Empty state */
+  .empty { text-align: center; color: #1e3a52; font-size: 13px; padding: 30px 0; }
+
+  @keyframes glow-pulse {
+    0%, 100% { transform: scale(1); opacity: 0.6; }
+    50% { transform: scale(1.12); opacity: 1; }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .fade-in { animation: fadeIn 0.3s ease forwards; }
+
+  input[type=number]::-webkit-outer-spin-button,
+  input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
+</style>
+</head>
+<body>
+<div class="bg-glow"></div>
+<div id="app">
+  <!-- Header -->
+  <div class="header">
+    <div class="header-top">
+      <div class="header-brand">
+        <span class="brand-label">Grab Driver</span>
+        <span class="brand-title">Income Tracker</span>
+      </div>
+      <div class="header-clock">
+        <div class="clock-date" id="clockDate"></div>
+        <div class="clock-time" id="clockTime"></div>
+      </div>
+    </div>
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('today')">Hari Ini</button>
+      <button class="tab inactive" onclick="switchTab('week')">Mingguan</button>
+      <button class="tab inactive" onclick="switchTab('month')">Bulanan</button>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="content" id="content"></div>
+</div>
+
+<!-- OFF Modal -->
+<div class="modal-overlay" id="offModal" onclick="modalBgClick(event)">
+  <div class="modal-box">
+    <div class="modal-title">🔴 Turn OFF</div>
+    <div class="modal-sub">Mau ngapain sekarang?</div>
+    <textarea class="modal-textarea" id="offNote" rows="3" placeholder="cth: jemput anak, makan siang, istirahat, pulang..."></textarea>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal()">Batal</button>
+      <button class="btn-off" onclick="confirmOff()">🔴 OFF Sekarang</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============ CONSTANTS ============
+const TARGET_DAILY = 150000;
+const TARGET_WEEKLY = 900000;
+const TARGET_MONTHLY = 3900000;
+const DAYS = ['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
+const MONTHS = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+
+// ============ STATE ============
+let currentTab = 'today';
+let isOn = false;
+let currentOnTime = null;
+let sessions = []; // [{onTime, offTime, note, duration}]
+let savedIncome = null;
+let allDays = [];
+let showIncomeInput = false;
+let clockInterval = null;
+
+// ============ STORAGE ============
+function load() {
+  try {
+    const d = JSON.parse(localStorage.getItem('grab_tracker_v2') || '{}');
+    allDays = d.allDays || [];
+    const todayData = allDays.find(x => x.date === todayKey());
+    if (todayData) {
+      sessions = todayData.sessions || [];
+      savedIncome = todayData.income ?? null;
+    }
+  } catch(e) {}
+}
+function save() {
+  try {
+    const updated = upsertDay(allDays, todayKey(), { sessions, income: savedIncome });
+    allDays = updated;
+    localStorage.setItem('grab_tracker_v2', JSON.stringify({ allDays }));
+  } catch(e) {}
+}
+function upsertDay(days, key, patch) {
+  const idx = days.findIndex(d => d.date === key);
+  if (idx >= 0) {
+    const copy = [...days];
+    copy[idx] = { ...copy[idx], ...patch };
+    return copy;
+  }
+  return [...days, { date: key, income: null, sessions: [], ...patch }];
+}
+function todayKey() { return new Date().toDateString(); }
+
+// ============ FORMATTING ============
+function fRp(val) { return 'Rp ' + Math.round(val).toLocaleString('id-ID'); }
+function fTime(d) { return d.toLocaleTimeString('id-ID', {hour:'2-digit',minute:'2-digit',second:'2-digit'}); }
+function fTimeShort(d) { return new Date(d).toLocaleTimeString('id-ID', {hour:'2-digit',minute:'2-digit'}); }
+function fDuration(ms) {
+  const s = Math.floor(ms/1000), h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = s%60;
+  return `${pad(h)}:${pad(m)}:${pad(sec)}`;
+}
+function pad(n) { return String(n).padStart(2,'0'); }
+function fDate(d) {
+  return d.toLocaleDateString('id-ID', {weekday:'long',day:'numeric',month:'long',year:'numeric'});
+}
+function pct(val, target) { return Math.min(100, Math.round((val/target)*100)); }
+
+// ============ TIME ============
+function totalMs() {
+  const completedMs = sessions.reduce((a,s) => a + (s.duration||0), 0);
+  const liveMs = isOn && currentOnTime ? (Date.now() - currentOnTime) : 0;
+  return completedMs + liveMs;
+}
+
+// ============ CLOCK ============
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clockDate').textContent = fDate(now).split(',')[0];
+  document.getElementById('clockTime').textContent = fTime(now);
+  // Update live elements
+  const timerEl = document.getElementById('liveTimer');
+  if (timerEl) timerEl.textContent = fDuration(totalMs());
+  const liveDur = document.getElementById('liveDur');
+  if (liveDur && isOn && currentOnTime) liveDur.textContent = fDuration(Date.now() - currentOnTime);
+  // Update earning rate if income saved
+  if (savedIncome && totalMs() > 0) {
+    const ms = totalMs();
+    const perH = document.getElementById('rateHour');
+    const perM = document.getElementById('rateMin');
+    const perS = document.getElementById('rateSec');
+    if (perH) perH.textContent = fRp(savedIncome / (ms/3600000));
+    if (perM) perM.textContent = fRp(savedIncome / (ms/60000));
+    if (perS) perS.textContent = fRp(savedIncome / (ms/1000));
+  }
+}
+
+// ============ TABS ============
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach((t,i) => {
+    const tabs = ['today','week','month'];
+    t.className = 'tab ' + (tabs[i] === tab ? 'active' : 'inactive');
+  });
+  render();
+}
+
+// ============ ACTIONS ============
+function toggleOnOff() {
+  if (!isOn) {
+    isOn = true;
+    currentOnTime = Date.now();
+    render();
+  } else {
+    document.getElementById('offModal').classList.add('show');
+    document.getElementById('offNote').value = '';
+    setTimeout(() => document.getElementById('offNote').focus(), 200);
+  }
+}
+function closeModal() { document.getElementById('offModal').classList.remove('show'); }
+function modalBgClick(e) { if (e.target === document.getElementById('offModal')) closeModal(); }
+function confirmOff() {
+  const note = document.getElementById('offNote').value.trim() || 'Selesai';
+  const offTime = Date.now();
+  const duration = offTime - currentOnTime;
+  sessions.push({ onTime: currentOnTime, offTime, note, duration });
+  isOn = false; currentOnTime = null;
+  closeModal(); save(); render();
+}
+function openIncomeInput() { showIncomeInput = true; render(); setTimeout(() => document.getElementById('incomeInput')?.focus(), 100); }
+function closeIncomeInput() { showIncomeInput = false; render(); }
+function saveIncome() {
+  const val = parseInt((document.getElementById('incomeInput')?.value||'').replace(/\D/g,''), 10);
+  if (!isNaN(val) && val > 0) {
+    savedIncome = val; showIncomeInput = false; save(); render();
+  }
+}
+function incomeKeydown(e) { if (e.key === 'Enter') saveIncome(); }
+
+// ============ DATA ============
+function getWeekDays() {
+  const days = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    const key = d.toDateString();
+    const found = allDays.find(x => x.date === key);
+    days.push({ date: d, key, income: found?.income || 0, sessions: found?.sessions || [] });
+  }
+  return days;
+}
+function getMonthDays() {
+  const now = new Date();
+  return allDays.filter(d => {
+    const dd = new Date(d.date);
+    return dd.getMonth() === now.getMonth() && dd.getFullYear() === now.getFullYear();
+  });
+}
+
+// ============ RENDER ============
+function render() {
+  const content = document.getElementById('content');
+  if (currentTab === 'today') content.innerHTML = renderToday();
+  else if (currentTab === 'week') content.innerHTML = renderWeek();
+  else content.innerHTML = renderMonth();
+}
+
+function renderToday() {
+  const ms = totalMs();
+  const liveMs = isOn && currentOnTime ? (Date.now() - currentOnTime) : 0;
+  const todayIncome = savedIncome || 0;
+  const dp = pct(todayIncome, TARGET_DAILY);
+  const perH = ms > 0 && savedIncome ? fRp(savedIncome / (ms/3600000)) : '-';
+  const perM = ms > 0 && savedIncome ? fRp(savedIncome / (ms/60000)) : '-';
+  const perS = ms > 0 && savedIncome ? fRp(savedIncome / (ms/1000)) : '-';
+
+  return `
+  <div class="fade-in">
+    <!-- ON/OFF -->
+    <div class="onoff-wrap">
+      <button class="onoff-btn ${isOn?'on':'off'}" onclick="toggleOnOff()">
+        <span class="onoff-icon">${isOn ? '🟢' : '⭕'}</span>
+        <span class="onoff-label">${isOn ? 'ON' : 'OFF'}</span>
+      </button>
+      ${isOn && currentOnTime ? `
+        <div class="onoff-since">
+          <div class="since-label">Mulai Sejak</div>
+          <div class="since-time">${fTimeShort(currentOnTime)}</div>
+        </div>` : ''}
+      ${!isOn && sessions.length === 0 ? `<div style="font-size:12px;color:var(--muted)">Tap untuk mulai kerja</div>` : ''}
+    </div>
+
+    <!-- Timer -->
+    <div class="card card-green" style="text-align:center">
+      <div class="card-label label-green">Total Waktu Efektif</div>
+      <div class="timer-display num-green" id="liveTimer">${fDuration(ms)}</div>
+    </div>
+
+    <!-- Sessions -->
+    ${sessions.length > 0 || isOn ? `
+    <div style="margin-bottom:14px">
+      <div class="section-title">Log Sesi Hari Ini</div>
+      <div class="session-list">
+        ${sessions.map(s => `
+          <div class="session-item">
+            <div>
+              <div class="session-time">${fTimeShort(s.onTime)} → ${fTimeShort(s.offTime)}</div>
+              <div class="session-note">OFF: ${s.note}</div>
+            </div>
+            <div class="session-dur">${fDuration(s.duration)}</div>
+          </div>
+        `).join('')}
+        ${isOn && currentOnTime ? `
+          <div class="session-item live">
+            <div>
+              <div class="session-time live">${fTimeShort(currentOnTime)} → sekarang</div>
+              <div class="session-note live">🟢 Sedang berjalan</div>
+            </div>
+            <div class="session-dur" id="liveDur">${fDuration(liveMs)}</div>
+          </div>` : ''}
+      </div>
+    </div>` : ''}
+
+    <!-- Income -->
+    <div class="card card-gold">
+      <div class="card-label label-gold">Penghasilan Hari Ini</div>
+      ${savedIncome ? `
+        <div class="big-num num-gold">${fRp(savedIncome)}</div>
+        <div class="progress-wrap">
+          <div class="progress-meta">
+            <span>Target: ${fRp(TARGET_DAILY)}</span>
+            <span class="progress-pct" style="color:${dp>=100?'var(--green)':'var(--gold)'}">${dp}%</span>
+          </div>
+          <div class="progress-track"><div class="progress-fill ${dp>=100?'fill-green':'fill-gold'}" style="width:${dp}%"></div></div>
+          <div class="progress-note ${dp>=100?'success':''}">${dp>=100 ? '🎉 Target tercapai!' : 'Kurang ' + fRp(TARGET_DAILY - savedIncome)}</div>
+        </div>
+        <button class="btn-outline-gold" onclick="openIncomeInput()">Edit Penghasilan</button>
+      ` : `
+        <div style="font-size:13px;color:var(--muted);margin-bottom:12px">Belum ada input penghasilan hari ini</div>
+        ${!showIncomeInput ? `<button class="btn btn-primary" onclick="openIncomeInput()">+ Input Penghasilan</button>` : ''}
+      `}
+      ${showIncomeInput ? `
+        <div style="margin-top:12px">
+          <div style="font-size:11px;color:var(--gold);margin-bottom:6px">Masukkan total penghasilan bersih (Rp):</div>
+          <div class="income-input-wrap">
+            <input class="income-input" type="number" id="incomeInput" placeholder="150000" onkeydown="incomeKeydown(event)"/>
+            <button class="btn btn-gold" onclick="saveIncome()">Simpan</button>
+            <button class="btn btn-ghost" onclick="closeIncomeInput()">✕</button>
+          </div>
+        </div>` : ''}
+    </div>
+
+    <!-- Earning Rate -->
+    ${savedIncome && ms > 0 ? `
+    <div style="margin-bottom:14px">
+      <div class="section-title">Earning Rate</div>
+      <div class="rate-grid">
+        <div class="rate-card">
+          <div class="rate-label">Per Jam</div>
+          <div class="rate-val" style="font-size:14px" id="rateHour">${perH}</div>
+        </div>
+        <div class="rate-card">
+          <div class="rate-label">Per Menit</div>
+          <div class="rate-val" style="font-size:12px" id="rateMin">${perM}</div>
+        </div>
+        <div class="rate-card">
+          <div class="rate-label">Per Detik</div>
+          <div class="rate-val" style="font-size:11px" id="rateSec">${perS}</div>
+        </div>
+      </div>
+    </div>` : ''}
+  </div>`;
+}
+
+function renderWeek() {
+  const weekDays = getWeekDays();
+  const weekTotal = weekDays.reduce((a,d) => a+(d.income||0), 0);
+  const wp = pct(weekTotal, TARGET_WEEKLY);
+  const tKey = todayKey();
+
+  return `
+  <div class="fade-in">
+    <div class="card card-green">
+      <div class="card-label label-green">Total Minggu Ini</div>
+      <div class="big-num num-green">${fRp(weekTotal)}</div>
+      <div class="progress-wrap">
+        <div class="progress-meta">
+          <span>Target: ${fRp(TARGET_WEEKLY)}</span>
+          <span class="progress-pct" style="color:${wp>=100?'var(--green)':'var(--gold)'}">${wp}%</span>
+        </div>
+        <div class="progress-track"><div class="progress-fill fill-green" style="width:${wp}%"></div></div>
+        <div class="progress-note ${wp>=100?'success':''}">${wp>=100 ? '🎉 Target minggu ini tercapai!' : 'Kurang ' + fRp(TARGET_WEEKLY - weekTotal)}</div>
+      </div>
+    </div>
+
+    <div class="section-title">Rincian Per Hari</div>
+    ${weekDays.map(d => {
+      const isToday = d.key === tKey;
+      const p = pct(d.income, TARGET_DAILY);
+      const color = p >= 100 ? 'var(--green)' : '#ffd700';
+      return `
+      <div class="day-item ${isToday?'today':''}">
+        <div class="day-row">
+          <div class="day-name ${isToday?'today':''}">
+            ${DAYS[d.date.getDay()]}, ${d.date.getDate()} ${MONTHS[d.date.getMonth()]}
+            ${isToday ? '<span class="day-badge">HARI INI</span>' : ''}
+          </div>
+          <div class="day-income" style="color:${d.income>0?color:'#1e3a52'}">${d.income>0?fRp(d.income):'-'}</div>
+        </div>
+        ${d.income>0 ? `
+          <div class="day-bar">
+            <div class="day-bar-fill" style="width:${p}%;background:${p>=100?'var(--green)':'linear-gradient(90deg,#ffc800,#ff9500)'}"></div>
+          </div>` : ''}
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+function renderMonth() {
+  const now = new Date();
+  const monthDays = getMonthDays();
+  const monthTotal = monthDays.reduce((a,d) => a+(d.income||0), 0);
+  const mp = pct(monthTotal, TARGET_MONTHLY);
+  const workDays = monthDays.filter(d => d.income > 0).length;
+  const avgPerDay = workDays > 0 ? monthTotal / workDays : 0;
+  const estMonthEnd = workDays > 0 ? avgPerDay * 26 : 0;
+
+  return `
+  <div class="fade-in">
+    <div class="card card-purple">
+      <div class="card-label label-purple">Total ${MONTHS[now.getMonth()]} ${now.getFullYear()}</div>
+      <div class="big-num num-purple">${fRp(monthTotal)}</div>
+      <div class="progress-wrap">
+        <div class="progress-meta">
+          <span>Target: ${fRp(TARGET_MONTHLY)}</span>
+          <span class="progress-pct" style="color:${mp>=100?'var(--green)':'#a67fff'}">${mp}%</span>
+        </div>
+        <div class="progress-track"><div class="progress-fill fill-purple" style="width:${mp}%"></div></div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:5px">
+          <span>Hari kerja: ${workDays} / 26</span>
+          ${mp<100?`<span>Kurang ${fRp(TARGET_MONTHLY-monthTotal)}</span>`:''}
+        </div>
+        ${mp>=100?`<div class="progress-note success">🎉 Target bulan ini tercapai!</div>`:''}
+      </div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Rata-rata / Hari</div>
+        <div class="stat-val" style="color:#ffd700">${fRp(avgPerDay)}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Estimasi Akhir Bulan</div>
+        <div class="stat-val" style="color:#c4a0ff">${fRp(estMonthEnd)}</div>
+      </div>
+    </div>
+
+    ${monthDays.length > 0 ? `
+      <div class="section-title">Riwayat Bulan Ini</div>
+      ${[...monthDays].sort((a,b) => new Date(b.date)-new Date(a.date)).map(d => {
+        const dd = new Date(d.date);
+        const p = pct(d.income||0, TARGET_DAILY);
+        return `
+        <div class="day-item">
+          <div class="day-row">
+            <div class="day-name">${DAYS[dd.getDay()]}, ${dd.getDate()} ${MONTHS[dd.getMonth()]}</div>
+            <div>
+              <div class="day-income" style="color:${p>=100?'var(--green)':'#ffd700'}">${fRp(d.income||0)}</div>
+              <div style="font-size:10px;color:var(--muted);text-align:right">${p}% target</div>
+            </div>
+          </div>
+          <div class="day-bar">
+            <div class="day-bar-fill" style="width:${p}%;background:${p>=100?'var(--green)':'linear-gradient(90deg,#ffc800,#ff9500)'}"></div>
+          </div>
+        </div>`;
+      }).join('')}
+    ` : `<div class="empty">Belum ada data bulan ini</div>`}
+  </div>`;
+}
+
+// ============ INIT ============
+load();
+render();
+clockInterval = setInterval(updateClock, 1000);
+updateClock();
+</script>
+</body>
+</html>
+  `;
