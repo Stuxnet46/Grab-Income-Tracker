@@ -500,6 +500,23 @@ body {
   cursor: pointer;
 }
 
+.pkey {
+  padding: 18px 0; border-radius: 14px; border: 1px solid var(--border);
+  background: var(--card-bg); font-size: 22px; font-weight: 700;
+  color: var(--text); cursor: pointer; font-family: Syne, sans-serif;
+  text-align: center; user-select: none; -webkit-user-select: none;
+  touch-action: manipulation; transition: background 0.1s, transform 0.1s;
+  -webkit-tap-highlight-color: transparent;
+}
+.pkey:active { background: #00c864; color: #071a2e; transform: scale(0.93); }
+.pdel { font-size: 15px; color: var(--muted); }
+.pin-action-btn {
+  flex:1; padding: 11px 0; border-radius: 12px; font-size: 12px;
+  font-weight: 700; cursor: pointer; text-align: center;
+  font-family: DM Sans, sans-serif; touch-action: manipulation;
+  user-select: none; -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
 input[type=number]::-webkit-outer-spin-button,
 input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
 </style>
@@ -508,22 +525,29 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
 <div class="bg-glow"></div>
 
 <!-- PIN SCREEN -->
-<div id="pinScreen">
-  <div class="pin-ticker">
-    <div class="pin-ticker-inner">
-      &nbsp;&nbsp;&nbsp;🚗 GRAB DRIVER INCOME TRACKER &nbsp;•&nbsp; © Gentara Anugrah &nbsp;•&nbsp; 🚗 GRAB DRIVER INCOME TRACKER &nbsp;•&nbsp; © Gentara Anugrah &nbsp;•&nbsp; 🚗 GRAB DRIVER INCOME TRACKER &nbsp;•&nbsp; © Gentara Anugrah &nbsp;&nbsp;&nbsp;
+<div id="pinScreen" style="position:fixed;inset:0;z-index:9999;background:var(--page-bg);overflow-y:auto;display:flex;flex-direction:column;align-items:center;">
+  <!-- Ticker -->
+  <div style="width:100%;background:#00c864;overflow:hidden;height:28px;display:flex;align-items:center;flex-shrink:0;">
+    <div style="white-space:nowrap;animation:ticker 18s linear infinite;font-size:11px;font-weight:700;color:#071a2e;letter-spacing:2px;font-family:Syne,sans-serif;">
+      &nbsp;&nbsp;&nbsp;🚗 GRAB DRIVER INCOME TRACKER &nbsp;•&nbsp; © Gentara Anugrah &nbsp;•&nbsp; 🚗 GRAB DRIVER INCOME TRACKER &nbsp;•&nbsp; © Gentara Anugrah &nbsp;&nbsp;&nbsp;
     </div>
   </div>
-  <div class="pin-wrap">
-    <div class="pin-logo"><span class="pin-logo-text">GT</span></div>
-    <div class="pin-badge">ACCESS CONTROL SYSTEM</div>
-    <div class="pin-title" id="pinTitle">Income Tracker</div>
-    <div class="pin-sub" id="pinSub">Masukkan <span>PIN 6 digit</span> untuk akses</div>
-    <div class="pin-mode-tabs">
-      <button class="pin-mode-tab active" id="tabMasuk" onclick="setPinMode('masuk')">MASUK</button>
-      <button class="pin-mode-tab inactive" id="tabGanti" onclick="setPinMode('ganti')">GANTI PIN</button>
+  <!-- Content -->
+  <div style="width:100%;max-width:400px;padding:28px 24px 50px;display:flex;flex-direction:column;align-items:center;">
+    <!-- Logo -->
+    <div style="width:68px;height:68px;border-radius:18px;background:linear-gradient(135deg,#00c864,#00a855);display:flex;align-items:center;justify-content:center;margin-bottom:14px;box-shadow:0 8px 30px rgba(0,200,100,0.3);">
+      <span style="font-size:22px;font-weight:900;color:#fff;font-family:Syne,sans-serif;">GT</span>
     </div>
-    <div class="pin-dots" id="pinDots">
+    <div style="border:1px solid #00c864;border-radius:20px;padding:4px 14px;font-size:10px;color:#00c864;letter-spacing:2px;text-transform:uppercase;font-family:Syne,sans-serif;margin-bottom:10px;">ACCESS CONTROL SYSTEM</div>
+    <div style="font-size:24px;font-weight:900;font-family:Syne,sans-serif;text-align:center;margin-bottom:6px;">Income Tracker</div>
+    <div id="pinSub" style="font-size:13px;color:var(--muted);text-align:center;margin-bottom:16px;">Masukkan <span style="color:#00c864;font-weight:700;">PIN 6 digit</span> untuk akses</div>
+    <!-- Mode tabs -->
+    <div style="display:flex;width:100%;max-width:280px;border-radius:10px;overflow:hidden;border:1px solid var(--border);margin-bottom:22px;">
+      <div id="tabMasuk" style="flex:1;padding:10px 0;font-size:13px;font-weight:700;text-align:center;background:#00c864;color:#fff;cursor:pointer;font-family:DM Sans,sans-serif;" ontouchend="setPinMode('masuk')" onclick="setPinMode('masuk')">MASUK</div>
+      <div id="tabGanti" style="flex:1;padding:10px 0;font-size:13px;font-weight:700;text-align:center;background:transparent;color:var(--muted);cursor:pointer;font-family:DM Sans,sans-serif;" ontouchend="setPinMode('ganti')" onclick="setPinMode('ganti')">GANTI PIN</div>
+    </div>
+    <!-- Dots -->
+    <div style="display:flex;gap:14px;margin-bottom:24px;" id="pinDots">
       <div class="pin-dot" id="d0"></div>
       <div class="pin-dot" id="d1"></div>
       <div class="pin-dot" id="d2"></div>
@@ -531,36 +555,32 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
       <div class="pin-dot" id="d4"></div>
       <div class="pin-dot" id="d5"></div>
     </div>
-    <div class="pin-error" id="pinError"></div>
-    <div class="pin-grid" id="pinGrid">
-      <button class="pin-key" data-key="1">1</button>
-      <button class="pin-key" data-key="2">2</button>
-      <button class="pin-key" data-key="3">3</button>
-      <button class="pin-key" data-key="4">4</button>
-      <button class="pin-key" data-key="5">5</button>
-      <button class="pin-key" data-key="6">6</button>
-      <button class="pin-key" data-key="7">7</button>
-      <button class="pin-key" data-key="8">8</button>
-      <button class="pin-key" data-key="9">9</button>
-      <button class="pin-key empty"></button>
-      <button class="pin-key" data-key="0">0</button>
-      <button class="pin-key del" data-key="del">⌫ Hapus</button>
+    <div id="pinError" style="font-size:12px;color:#ff4444;margin-bottom:10px;min-height:18px;font-weight:600;text-align:center;"></div>
+    <!-- Keypad - using divs not buttons to avoid mobile button issues -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;width:100%;max-width:290px;" id="pinGrid">
+      <div class="pkey" ontouchend="pk(event,'1')" onclick="pk(event,'1')">1</div>
+      <div class="pkey" ontouchend="pk(event,'2')" onclick="pk(event,'2')">2</div>
+      <div class="pkey" ontouchend="pk(event,'3')" onclick="pk(event,'3')">3</div>
+      <div class="pkey" ontouchend="pk(event,'4')" onclick="pk(event,'4')">4</div>
+      <div class="pkey" ontouchend="pk(event,'5')" onclick="pk(event,'5')">5</div>
+      <div class="pkey" ontouchend="pk(event,'6')" onclick="pk(event,'6')">6</div>
+      <div class="pkey" ontouchend="pk(event,'7')" onclick="pk(event,'7')">7</div>
+      <div class="pkey" ontouchend="pk(event,'8')" onclick="pk(event,'8')">8</div>
+      <div class="pkey" ontouchend="pk(event,'9')" onclick="pk(event,'9')">9</div>
+      <div class="pkey" style="opacity:0;pointer-events:none;"></div>
+      <div class="pkey" ontouchend="pk(event,'0')" onclick="pk(event,'0')">0</div>
+      <div class="pkey pdel" ontouchend="pk(event,'del')" onclick="pk(event,'del')">⌫</div>
     </div>
-    <!-- Export / Import -->
-    <div class="data-btns">
-      <button class="btn-export" onclick="exportData()">
-        📤 Export Data
-      </button>
-      <button class="btn-import" onclick="document.getElementById('importFile').click()">
-        📥 Import Data
-      </button>
+    <!-- Export/Import -->
+    <div style="display:flex;gap:8px;margin-top:22px;width:100%;max-width:290px;">
+      <div class="pin-action-btn" style="background:rgba(0,200,100,0.1);border:1px solid rgba(0,200,100,0.3);color:#00c864;" ontouchend="exportData()" onclick="exportData()">📤 Export</div>
+      <div class="pin-action-btn" style="background:rgba(0,150,255,0.1);border:1px solid rgba(0,150,255,0.3);color:#5b8dd9;" ontouchend="document.getElementById('importFile').click()" onclick="document.getElementById('importFile').click()">📥 Import</div>
       <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)"/>
     </div>
-    <div class="backup-note">
-      <span>💡 Export rutin</span> untuk backup data.<br/>
-      Import jika data hilang setelah clear cache.
+    <div style="font-size:10px;color:var(--muted);margin-top:10px;text-align:center;line-height:1.6;">
+      <span style="color:#00c864;font-weight:700;">💡 Export rutin</span> untuk backup data.<br/>Import jika data hilang setelah clear cache.
     </div>
-    <div class="pin-footer-note" style="margin-top:14px">© Gentara Anugrah • Grab Driver Income Tracker</div>
+    <div style="font-size:10px;color:var(--muted);margin-top:16px;text-align:center;">© Gentara Anugrah • Grab Driver Income Tracker</div>
   </div>
 </div>
 
@@ -705,10 +725,13 @@ let pinNewTemp = '';
 let storedPin = localStorage.getItem('grab_pin') || DEFAULT_PIN;
 
 function setPinMode(mode) {
+  if(event) { event.preventDefault(); event.stopPropagation(); }
   pinMode = mode === 'ganti' ? 'ganti_old' : 'masuk';
   pinInput = ''; pinNewTemp = '';
-  document.getElementById('tabMasuk').className = 'pin-mode-tab ' + (mode==='masuk'?'active':'inactive');
-  document.getElementById('tabGanti').className = 'pin-mode-tab ' + (mode==='ganti'?'active':'inactive');
+  const tM = document.getElementById('tabMasuk');
+  const tG = document.getElementById('tabGanti');
+  if(tM) { tM.style.background = mode==='masuk'?'#00c864':'transparent'; tM.style.color = mode==='masuk'?'#fff':'var(--muted)'; }
+  if(tG) { tG.style.background = mode==='ganti'?'#00c864':'transparent'; tG.style.color = mode==='ganti'?'#fff':'var(--muted)'; }
   updatePinSub(); updatePinDots(); clearPinError();
 }
 function updatePinSub() {
@@ -1316,32 +1339,17 @@ function checkBackupReminder() {
   }
 }
 
-// ============ PIN GRID EVENT DELEGATION ============
-// Use event delegation + touchend for reliable mobile taps
-function initPinGrid() {
-  const grid = document.getElementById('pinGrid');
-  if (!grid) return;
-  function handlePinTap(e) {
-    e.preventDefault();
-    const btn = e.target.closest('[data-key]');
-    if (!btn) return;
-    const k = btn.dataset.key;
-    if (k === 'del') pinDel();
-    else pinKey(k);
-  }
-  grid.addEventListener('touchend', handlePinTap, { passive: false });
-  grid.addEventListener('click', handlePinTap);
+// Simplified PIN key handler - works on both touch and click
+function pk(e, k) {
+  e.preventDefault();
+  e.stopPropagation();
+  if (k === 'del') pinDel();
+  else pinKey(k);
 }
 
 // ============ INIT ============
 load();
 checkBackupReminder();
-// Init pin grid after DOM ready
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initPinGrid);
-} else {
-  initPinGrid();
-}
 </script>
 </body>
 </html>
