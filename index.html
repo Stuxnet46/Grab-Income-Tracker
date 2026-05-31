@@ -460,6 +460,43 @@ body {
 .tips-row { display: flex; justify-content: space-between; align-items: center; padding: 3px 0; font-size: 12px; }
 .tips-total-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-top: 1px solid var(--border); margin-top: 4px; }
 
+
+/* Export / Import buttons */
+.data-btns { display: flex; gap: 8px; margin-top: 18px; width: 100%; max-width: 300px; }
+.btn-export {
+  flex: 1; padding: 11px 0; border-radius: 12px; border: 1px solid rgba(0,200,100,0.35);
+  background: rgba(0,200,100,0.08); color: var(--green);
+  font-size: 12px; font-weight: 700; cursor: pointer;
+  font-family: 'DM Sans', sans-serif; letter-spacing: 0.3px;
+  transition: all 0.2s; text-align: center;
+}
+.btn-export:active { background: rgba(0,200,100,0.2); }
+.btn-import {
+  flex: 1; padding: 11px 0; border-radius: 12px; border: 1px solid rgba(0,150,255,0.35);
+  background: rgba(0,150,255,0.08); color: #5b8dd9;
+  font-size: 12px; font-weight: 700; cursor: pointer;
+  font-family: 'DM Sans', sans-serif; letter-spacing: 0.3px;
+  transition: all 0.2s; text-align: center;
+}
+.btn-import:active { background: rgba(0,150,255,0.2); }
+.backup-note {
+  font-size: 10px; color: var(--muted); margin-top: 10px;
+  text-align: center; line-height: 1.5; max-width: 280px;
+}
+.backup-note span { color: var(--green); font-weight: 700; }
+
+/* Reminder toast warning */
+.toast-warn {
+  position: fixed; top: 80px; left: 50%; transform: translateX(-50%);
+  background: #ff9500; color: #071a2e; border-radius: 20px;
+  padding: 10px 20px; font-size: 12px; font-weight: 700;
+  z-index: 300; white-space: nowrap; text-align: center;
+  animation: toastIn 0.3s ease;
+  font-family: 'DM Sans', sans-serif;
+  box-shadow: 0 4px 20px rgba(255,149,0,0.4);
+  cursor: pointer;
+}
+
 input[type=number]::-webkit-outer-spin-button,
 input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
 </style>
@@ -506,7 +543,21 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
       <button class="pin-key" onclick="pinKey('0')">0</button>
       <button class="pin-key del" onclick="pinDel()">⌫ Hapus</button>
     </div>
-    <div class="pin-footer-note">© Gentara Anugrah • Grab Driver Income Tracker</div>
+    <!-- Export / Import -->
+    <div class="data-btns">
+      <button class="btn-export" onclick="exportData()">
+        📤 Export Data
+      </button>
+      <button class="btn-import" onclick="document.getElementById('importFile').click()">
+        📥 Import Data
+      </button>
+      <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)"/>
+    </div>
+    <div class="backup-note">
+      <span>💡 Export rutin</span> untuk backup data.<br/>
+      Import jika data hilang setelah clear cache.
+    </div>
+    <div class="pin-footer-note" style="margin-top:14px">© Gentara Anugrah • Grab Driver Income Tracker</div>
   </div>
 </div>
 
@@ -1178,8 +1229,93 @@ function showToast(msg) {
   setTimeout(() => t.remove(), 2600);
 }
 
+// ============ EXPORT / IMPORT ============
+function exportData() {
+  try {
+    const data = {
+      version: 2,
+      exportDate: new Date().toISOString(),
+      allDays: JSON.parse(localStorage.getItem('grab_tracker_v3') || '{}').allDays || [],
+      tips: {},
+      pin: localStorage.getItem('grab_pin') || DEFAULT_PIN,
+      theme: localStorage.getItem('grab_theme') || 'dark',
+    };
+    // Collect all tips keys
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith('grab_tips_')) data.tips[k] = localStorage.getItem(k);
+    }
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const dateStr = new Date().toLocaleDateString('id-ID').replace(/\/g,'-');
+    a.href = url; a.download = 'grab-tracker-backup-' + dateStr + '.json';
+    a.click(); URL.revokeObjectURL(url);
+    showToast('✅ Data berhasil di-export!');
+    // Save last export date
+    localStorage.setItem('grab_last_export', new Date().toDateString());
+  } catch(e) { alert('Gagal export: ' + e.message); }
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data.allDays) { alert('File tidak valid. Pastikan file backup yang benar.'); return; }
+      // Restore all data
+      localStorage.setItem('grab_tracker_v3', JSON.stringify({ allDays: data.allDays }));
+      if (data.tips) { Object.keys(data.tips).forEach(k => localStorage.setItem(k, data.tips[k])); }
+      if (data.pin) { localStorage.setItem('grab_pin', data.pin); storedPin = data.pin; }
+      if (data.theme) { localStorage.setItem('grab_theme', data.theme); }
+      // Reload app state
+      load();
+      const exportDate = data.exportDate ? new Date(data.exportDate).toLocaleDateString('id-ID') : '-';
+      showImportSuccess(data.allDays.length, exportDate);
+    } catch(err) { alert('Gagal import: File rusak atau format salah.'); }
+    event.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
+function showImportSuccess(dayCount, exportDate) {
+  const existing = document.querySelector('.toast');
+  if (existing) existing.remove();
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.style.cssText = 'white-space:normal;text-align:center;max-width:280px;line-height:1.5;padding:12px 20px;';
+  t.innerHTML = '✅ Import berhasil!<br/>' + dayCount + ' hari data dipulihkan<br/><small style="opacity:0.8">Backup: ' + exportDate + '</small>';
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3500);
+}
+
+// ============ WEEKLY BACKUP REMINDER ============
+function checkBackupReminder() {
+  const lastExport = localStorage.getItem('grab_last_export');
+  if (!lastExport) return; // Never exported, no reminder needed yet
+  const last = new Date(lastExport);
+  const now = new Date();
+  const daysDiff = Math.floor((now - last) / (1000 * 60 * 60 * 24));
+  if (daysDiff >= 7) {
+    setTimeout(() => {
+      const existing = document.querySelector('.toast-warn');
+      if (existing) existing.remove();
+      const t = document.createElement('div');
+      t.className = 'toast-warn';
+      t.innerHTML = '⚠️ Sudah ' + daysDiff + ' hari belum backup!<br/><small>Tap untuk export sekarang</small>';
+      t.style.cssText += 'white-space:normal;text-align:center;max-width:280px;line-height:1.6;padding:12px 20px;';
+      t.onclick = () => { exportData(); t.remove(); };
+      document.body.appendChild(t);
+      setTimeout(() => { if(t.parentNode) t.remove(); }, 6000);
+    }, 2000);
+  }
+}
+
 // ============ INIT ============
 load();
+checkBackupReminder();
 </script>
 </body>
 </html>
