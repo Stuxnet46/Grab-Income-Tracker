@@ -395,6 +395,71 @@ body {
 @keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
 .fade-in { animation: fadeIn 0.3s ease forwards; }
 
+
+/* Floating Calc Button */
+.fab {
+  position: fixed; bottom: 52px; right: 16px; z-index: 60;
+  width: 58px; height: 58px; border-radius: 18px; border: none; cursor: pointer;
+  background: linear-gradient(145deg, #0d2137 0%, #071a2e 100%);
+  box-shadow: 0 0 0 1px rgba(0,200,100,0.4), 0 8px 32px rgba(0,200,100,0.25), 0 2px 8px rgba(0,0,0,0.4);
+  display: flex; align-items: center; justify-content: center;
+  transition: transform 0.2s, box-shadow 0.2s;
+  overflow: hidden;
+}
+.fab::before {
+  content: ''; position: absolute; inset: 0; border-radius: 18px;
+  background: linear-gradient(145deg, rgba(0,200,100,0.12) 0%, transparent 60%);
+  pointer-events: none;
+}
+.fab:active { transform: scale(0.88); box-shadow: 0 0 0 1px rgba(0,200,100,0.6), 0 4px 16px rgba(0,200,100,0.35); }
+.fab svg { position: relative; z-index: 1; filter: drop-shadow(0 0 6px rgba(0,200,100,0.6)); }
+
+/* Toast */
+.toast {
+  position: fixed; top: 80px; left: 50%; transform: translateX(-50%);
+  background: #00c864; color: #071a2e; border-radius: 20px;
+  padding: 10px 20px; font-size: 13px; font-weight: 700;
+  z-index: 300; white-space: nowrap;
+  animation: toastIn 0.3s ease, toastOut 0.4s ease 2s forwards;
+  font-family: 'DM Sans', sans-serif;
+  box-shadow: 0 4px 20px rgba(0,200,100,0.4);
+}
+@keyframes toastIn { from{opacity:0;transform:translateX(-50%) translateY(-10px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
+@keyframes toastOut { from{opacity:1} to{opacity:0;pointer-events:none} }
+
+/* Calc Modal */
+.calc-input {
+  width: 100%; background: var(--input-bg); border: 1px solid rgba(0,200,100,0.3);
+  border-radius: 10px; padding: 11px 13px; color: var(--text); font-size: 16px;
+  font-weight: 700; outline: none; font-family: 'DM Sans', sans-serif; margin-top: 6px;
+}
+.calc-input::placeholder { color: var(--muted); opacity: 0.5; }
+.calc-result {
+  background: rgba(0,200,100,0.08); border: 1px solid rgba(0,200,100,0.2);
+  border-radius: 12px; padding: 14px 16px; margin: 14px 0;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.calc-result-label { font-size: 12px; color: var(--muted); }
+.calc-result-val { font-size: 22px; font-weight: 900; color: var(--green); font-family: 'Syne', sans-serif; font-variant-numeric: tabular-nums; }
+.calc-result-val.zero { color: var(--muted); font-size: 18px; }
+.btn-add-tips { width: 100%; padding: 13px; background: linear-gradient(135deg,#00c864,#00a855); border: none; border-radius: 12px; color: #fff; font-weight: 800; cursor: pointer; font-size: 15px; font-family: 'DM Sans', sans-serif; margin-bottom: 8px; }
+.btn-add-tips:disabled { opacity: 0.3; cursor: not-allowed; }
+.btn-reset-calc { width: 100%; padding: 11px; background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; color: var(--muted); font-weight: 700; cursor: pointer; font-size: 13px; font-family: 'DM Sans', sans-serif; }
+
+/* Logout btn */
+.logout-btn {
+  background: rgba(255,60,60,0.1); border: 1px solid rgba(255,60,60,0.25);
+  border-radius: 8px; padding: 4px 10px; font-size: 10px;
+  font-weight: 700; color: #ff6060; cursor: pointer;
+  font-family: 'DM Sans', sans-serif; letter-spacing: 0.5px;
+  transition: all 0.2s; margin-top: 2px;
+}
+.logout-btn:active { background: rgba(255,60,60,0.25); }
+
+/* Tips badge on income */
+.tips-row { display: flex; justify-content: space-between; align-items: center; padding: 3px 0; font-size: 12px; }
+.tips-total-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-top: 1px solid var(--border); margin-top: 4px; }
+
 input[type=number]::-webkit-outer-spin-button,
 input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
 </style>
@@ -466,7 +531,10 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
           <div class="clock-date" id="clockDate"></div>
           <div class="clock-time" id="clockTime"></div>
         </div>
-        <button class="theme-btn" onclick="toggleTheme()" id="themeBtn">🌙 Dark</button>
+        <div style="display:flex;gap:6px;align-items:center">
+          <button class="theme-btn" onclick="toggleTheme()" id="themeBtn">🌙 Dark</button>
+          <button class="logout-btn" onclick="logout()">🚪 Keluar</button>
+        </div>
       </div>
     </div>
     <div class="tabs">
@@ -479,6 +547,77 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
   <div class="content" id="content"></div>
 
   <div class="footer">© Gentara Anugrah All Rights Reserved &nbsp;•&nbsp; Grab Driver Income Tracker</div>
+  <!-- Floating Calc Button -->
+  <button class="fab" onclick="openCalc()" title="Kalkulator Kembalian">
+    <svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="calcGrad" x1="0" y1="0" x2="30" y2="30" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stop-color="#00f07a"/>
+          <stop offset="100%" stop-color="#00a855"/>
+        </linearGradient>
+        <linearGradient id="screenGrad" x1="0" y1="0" x2="14" y2="8" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stop-color="#00f07a" stop-opacity="0.25"/>
+          <stop offset="100%" stop-color="#00c864" stop-opacity="0.08"/>
+        </linearGradient>
+      </defs>
+      <!-- Calculator body -->
+      <rect x="4" y="2" width="22" height="26" rx="4" fill="none" stroke="url(#calcGrad)" stroke-width="1.5"/>
+      <!-- Screen -->
+      <rect x="7" y="5" width="16" height="7" rx="2" fill="url(#screenGrad)" stroke="url(#calcGrad)" stroke-width="0.8" stroke-opacity="0.6"/>
+      <!-- Screen Rp symbol -->
+      <text x="10" y="11" font-size="5.5" fill="url(#calcGrad)" font-family="sans-serif" font-weight="700">Rp</text>
+      <!-- Screen value dots -->
+      <rect x="19" y="7.5" width="2" height="1.5" rx="0.5" fill="url(#calcGrad)" opacity="0.9"/>
+      <rect x="19" y="10" width="3.5" height="1.5" rx="0.5" fill="url(#calcGrad)" opacity="0.6"/>
+      <!-- Button rows -->
+      <!-- Row 1 -->
+      <rect x="7" y="15" width="4" height="3" rx="1" fill="url(#calcGrad)" opacity="0.7"/>
+      <rect x="13" y="15" width="4" height="3" rx="1" fill="url(#calcGrad)" opacity="0.5"/>
+      <rect x="19" y="15" width="4" height="3" rx="1" fill="url(#calcGrad)" opacity="0.5"/>
+      <!-- Row 2 -->
+      <rect x="7" y="20" width="4" height="3" rx="1" fill="url(#calcGrad)" opacity="0.5"/>
+      <rect x="13" y="20" width="4" height="3" rx="1" fill="url(#calcGrad)" opacity="0.5"/>
+      <rect x="19" y="20" width="4" height="3" rx="1" fill="#00f07a" opacity="0.9"/>
+      <!-- Plus sign on last button -->
+      <line x1="21" y1="21" x2="21" y2="23" stroke="#071a2e" stroke-width="1.2" stroke-linecap="round"/>
+      <line x1="20" y1="22" x2="22" y2="22" stroke="#071a2e" stroke-width="1.2" stroke-linecap="round"/>
+      <!-- Row 3 -->
+      <rect x="7" y="25" width="10" height="3" rx="1" fill="url(#calcGrad)" opacity="0.4"/>
+      <rect x="19" y="25" width="4" height="3" rx="1" fill="url(#calcGrad)" opacity="0.35"/>
+    </svg>
+  </button>
+</div>
+
+<!-- Calculator Modal -->
+<div class="modal-overlay" id="calcModal" onclick="calcBgClick(event)">
+  <div class="modal-box">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+      <div class="modal-title">🧮 Kalkulator Tunai</div>
+      <button onclick="closeCalc()" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer">✕</button>
+    </div>
+    <div class="modal-sub">Hitung kembalian yang tidak diambil customer</div>
+    <div style="margin-bottom:10px">
+      <div style="font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">Uang Diterima dari Customer</div>
+      <input class="calc-input" type="number" id="calcTerima" placeholder="50000" oninput="hitungKembalian()"/>
+    </div>
+    <div style="margin-bottom:10px">
+      <div style="font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">Tagihan / Ongkir</div>
+      <input class="calc-input" type="number" id="calcTagihan" placeholder="43000" oninput="hitungKembalian()"/>
+    </div>
+    <div class="calc-result">
+      <div>
+        <div class="calc-result-label">Tips Kembalian</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px" id="calcFormula">-</div>
+      </div>
+      <div class="calc-result-val" id="calcKembalian">Rp 0</div>
+    </div>
+    <button class="btn-add-tips" id="btnAddTips" onclick="tambahTips()" disabled>➕ Tambah ke Tips Hari Ini</button>
+    <button class="btn-reset-calc" onclick="resetCalc()">🔄 Hitung Ulang</button>
+    <div style="margin-top:12px;padding:10px;background:var(--card-bg);border-radius:10px;border:1px solid var(--border)">
+      <div style="font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">Total Tips Hari Ini</div>
+      <div style="font-size:18px;font-weight:800;color:var(--green);font-family:'Syne',sans-serif" id="totalTipsDisplay">Rp 0</div>
+    </div>
+  </div>
 </div>
 
 <!-- OFF Modal -->
@@ -502,6 +641,7 @@ const TARGET_MONTHLY = 3900000;
 const BBM_COST = 20000;
 const DEFAULT_PIN = '700115';
 const DAYS = ['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
+let todayTips = parseInt(localStorage.getItem('grab_tips_'+new Date().toDateString())||'0',10);
 const MONTHS = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 
 // ============ PIN STATE ============
@@ -747,7 +887,7 @@ function render() { const c=document.getElementById('content'); if(!c) return; i
 
 function renderToday() {
   const ms=totalMs(), liveMs=isOn&&currentOnTime?(Date.now()-currentOnTime):0;
-  const income=savedIncome||0, dp=pct(income,TARGET_DAILY);
+  const income=(savedIncome||0)+todayTips, dp=pct(income,TARGET_DAILY);
   const bersih=income-BBM_COST;
   const perH=ms>0&&savedIncome?fRp(savedIncome/(ms/3600000)):'-';
   const perM=ms>0&&savedIncome?fRp(savedIncome/(ms/60000)):'-';
@@ -800,23 +940,28 @@ function renderToday() {
     <div class="card card-gold">
       <div class="card-label label-gold">Penghasilan Hari Ini</div>
       ${savedIncome?`
-        <div class="big-num num-gold">${fRp(savedIncome)}</div>
+        ${todayTips>0?`
+          <div class="tips-row"><span style="color:var(--muted)">Income Grab</span><span style="font-weight:700">${fRp(savedIncome)}</span></div>
+          <div class="tips-row"><span style="color:#00c864">+ Tips Tunai</span><span style="font-weight:700;color:#00c864">+ ${fRp(todayTips)}</span></div>
+          <div class="tips-total-row"><span style="font-weight:800">Total</span><span class="big-num num-gold" style="font-size:24px">${fRp(savedIncome+todayTips)}</span></div>
+        `:`<div class="big-num num-gold">${fRp(savedIncome)}</div>`}
         <div class="progress-wrap">
           <div class="progress-meta">
             <span>Target: ${fRp(TARGET_DAILY)}</span>
             <span class="progress-pct" style="color:${dp>=100?'var(--green)':'var(--gold)'}">${dp}%</span>
           </div>
           <div class="progress-track"><div class="progress-fill ${dp>=100?'fill-green':'fill-gold'}" style="width:${dp}%"></div></div>
-          <div class="progress-note ${dp>=100?'success':''}">${dp>=100?'🎉 Target tercapai!':'Kurang '+fRp(TARGET_DAILY-savedIncome)}</div>
+          <div class="progress-note ${dp>=100?'success':''}">${dp>=100?'🎉 Target tercapai!':'Kurang '+fRp(TARGET_DAILY-income)}</div>
         </div>
         <button class="btn-outline-gold" onclick="openIncomeInput()">Edit Penghasilan</button>
       `:`
-        <div style="font-size:13px;color:var(--muted);margin-bottom:11px">Belum ada input penghasilan</div>
+        ${todayTips>0?`<div style="margin-bottom:8px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">Tips tunai terkumpul:</div><div style="font-size:20px;font-weight:800;color:#00c864">${fRp(todayTips)}</div></div>`:''}
+        <div style="font-size:13px;color:var(--muted);margin-bottom:11px">Belum ada input income Grab</div>
         ${!showIncomeInput?`<button class="btn btn-primary" onclick="openIncomeInput()">+ Input Penghasilan</button>`:''}
       `}
       ${showIncomeInput?`
         <div style="margin-top:10px">
-          <div style="font-size:11px;color:var(--gold);margin-bottom:6px">Total penghasilan bersih (Rp):</div>
+          <div style="font-size:11px;color:var(--gold);margin-bottom:6px">Income bersih dari Grab (Rp):</div>
           <div class="income-input-wrap">
             <input class="income-input" type="number" id="incomeInput" placeholder="150000" onkeydown="incomeKeydown(event)"/>
             <button class="btn btn-gold" onclick="saveIncome()">Simpan</button>
@@ -960,6 +1105,77 @@ function renderMonth() {
       }).join('')}
     `:`<div class="empty">Belum ada data bulan ini</div>`}
   </div>`;
+}
+
+// ============ LOGOUT ============
+function logout() {
+  // Reset app state
+  isOn = false; currentOnTime = null; sessions = []; savedIncome = null; savedNote = '';
+  showIncomeInput = false; editingDayKey = null;
+  if (clockInt) { clearInterval(clockInt); clockInt = null; }
+  // Reset PIN state
+  pinInput = ''; pinNewTemp = ''; pinMode = 'masuk';
+  document.getElementById('tabMasuk').className = 'pin-mode-tab active';
+  document.getElementById('tabGanti').className = 'pin-mode-tab inactive';
+  updatePinDots(); clearPinError(); updatePinSub();
+  // Show PIN screen
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('pinScreen').style.display = '';
+}
+
+// ============ CALCULATOR ============
+let calcKembalianVal = 0;
+function openCalc() {
+  document.getElementById('totalTipsDisplay').textContent = fRp(todayTips);
+  document.getElementById('calcModal').classList.add('show');
+}
+function closeCalc() { document.getElementById('calcModal').classList.remove('show'); }
+function calcBgClick(e) { if(e.target===document.getElementById('calcModal')) closeCalc(); }
+function hitungKembalian() {
+  const terima = parseInt(document.getElementById('calcTerima').value||'0',10);
+  const tagihan = parseInt(document.getElementById('calcTagihan').value||'0',10);
+  calcKembalianVal = terima - tagihan;
+  const el = document.getElementById('calcKembalian');
+  const formula = document.getElementById('calcFormula');
+  const btn = document.getElementById('btnAddTips');
+  if (terima > 0 && tagihan > 0) {
+    formula.textContent = fRp(terima) + ' - ' + fRp(tagihan);
+  } else { formula.textContent = '-'; }
+  if (calcKembalianVal > 0) {
+    el.textContent = fRp(calcKembalianVal);
+    el.className = 'calc-result-val';
+    btn.disabled = false;
+  } else {
+    el.textContent = calcKembalianVal < 0 ? '⚠️ Kurang' : 'Rp 0';
+    el.className = 'calc-result-val zero';
+    btn.disabled = true;
+  }
+}
+function resetCalc() {
+  document.getElementById('calcTerima').value = '';
+  document.getElementById('calcTagihan').value = '';
+  document.getElementById('calcKembalian').textContent = 'Rp 0';
+  document.getElementById('calcKembalian').className = 'calc-result-val zero';
+  document.getElementById('calcFormula').textContent = '-';
+  document.getElementById('btnAddTips').disabled = true;
+  calcKembalianVal = 0;
+}
+function tambahTips() {
+  if (calcKembalianVal <= 0) return;
+  todayTips += calcKembalianVal;
+  localStorage.setItem('grab_tips_'+new Date().toDateString(), todayTips);
+  showToast('✅ ' + fRp(calcKembalianVal) + ' ditambahkan ke tips!');
+  document.getElementById('totalTipsDisplay').textContent = fRp(todayTips);
+  resetCalc();
+  render();
+}
+function showToast(msg) {
+  const existing = document.querySelector('.toast');
+  if (existing) existing.remove();
+  const t = document.createElement('div');
+  t.className = 'toast'; t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2600);
 }
 
 // ============ INIT ============
