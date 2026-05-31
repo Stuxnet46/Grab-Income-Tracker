@@ -75,7 +75,7 @@ body {
 
 /* BG glow dark only */
 .bg-glow {
-  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  position: fixed; inset: 0; pointer-events: none; z-index: -1;
   background: radial-gradient(ellipse at 15% 10%, rgba(0,200,100,0.07) 0%, transparent 55%),
               radial-gradient(ellipse at 85% 85%, rgba(0,120,255,0.05) 0%, transparent 55%),
               linear-gradient(160deg, #0a1628 0%, #0d2137 50%, #071a2e 100%);
@@ -85,12 +85,13 @@ body {
 
 /* ===== PIN SCREEN ===== */
 #pinScreen {
-  position: fixed; inset: 0; z-index: 200;
+  position: fixed; inset: 0; z-index: 500;
   background: var(--page-bg);
   display: flex; flex-direction: column;
   align-items: center; justify-content: flex-start;
   overflow-y: auto;
   transition: background 0.3s;
+  touch-action: manipulation;
 }
 .pin-ticker {
   width: 100%; background: var(--ticker-bg);
@@ -144,6 +145,8 @@ body {
   background: var(--card-bg); font-size: 22px; font-weight: 700;
   color: var(--text); cursor: pointer; font-family: 'Syne', sans-serif;
   transition: all 0.15s; text-align: center;
+  touch-action: manipulation; -webkit-tap-highlight-color: rgba(0,200,100,0.2);
+  user-select: none; -webkit-user-select: none;
 }
 .pin-key:active { background: var(--green); color: #fff; transform: scale(0.95); }
 .pin-key.del { font-size: 14px; font-weight: 700; color: var(--muted); }
@@ -529,19 +532,19 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
       <div class="pin-dot" id="d5"></div>
     </div>
     <div class="pin-error" id="pinError"></div>
-    <div class="pin-grid">
-      <button class="pin-key" onclick="pinKey('1')">1</button>
-      <button class="pin-key" onclick="pinKey('2')">2</button>
-      <button class="pin-key" onclick="pinKey('3')">3</button>
-      <button class="pin-key" onclick="pinKey('4')">4</button>
-      <button class="pin-key" onclick="pinKey('5')">5</button>
-      <button class="pin-key" onclick="pinKey('6')">6</button>
-      <button class="pin-key" onclick="pinKey('7')">7</button>
-      <button class="pin-key" onclick="pinKey('8')">8</button>
-      <button class="pin-key" onclick="pinKey('9')">9</button>
+    <div class="pin-grid" id="pinGrid">
+      <button class="pin-key" data-key="1">1</button>
+      <button class="pin-key" data-key="2">2</button>
+      <button class="pin-key" data-key="3">3</button>
+      <button class="pin-key" data-key="4">4</button>
+      <button class="pin-key" data-key="5">5</button>
+      <button class="pin-key" data-key="6">6</button>
+      <button class="pin-key" data-key="7">7</button>
+      <button class="pin-key" data-key="8">8</button>
+      <button class="pin-key" data-key="9">9</button>
       <button class="pin-key empty"></button>
-      <button class="pin-key" onclick="pinKey('0')">0</button>
-      <button class="pin-key del" onclick="pinDel()">⌫ Hapus</button>
+      <button class="pin-key" data-key="0">0</button>
+      <button class="pin-key del" data-key="del">⌫ Hapus</button>
     </div>
     <!-- Export / Import -->
     <div class="data-btns">
@@ -1313,9 +1316,32 @@ function checkBackupReminder() {
   }
 }
 
+// ============ PIN GRID EVENT DELEGATION ============
+// Use event delegation + touchend for reliable mobile taps
+function initPinGrid() {
+  const grid = document.getElementById('pinGrid');
+  if (!grid) return;
+  function handlePinTap(e) {
+    e.preventDefault();
+    const btn = e.target.closest('[data-key]');
+    if (!btn) return;
+    const k = btn.dataset.key;
+    if (k === 'del') pinDel();
+    else pinKey(k);
+  }
+  grid.addEventListener('touchend', handlePinTap, { passive: false });
+  grid.addEventListener('click', handlePinTap);
+}
+
 // ============ INIT ============
 load();
 checkBackupReminder();
+// Init pin grid after DOM ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initPinGrid);
+} else {
+  initPinGrid();
+}
 </script>
 </body>
 </html>
