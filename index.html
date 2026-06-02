@@ -401,4 +401,785 @@ body {
   position: fixed; bottom: 52px; right: 16px; z-index: 60;
   width: 58px; height: 58px; border-radius: 18px; border: none; cursor: pointer;
   background: linear-gradient(145deg, #0d2137 0%, #071a2e 100%);
-  box-shadow: 0 0 0 1px rgba(0,200,100,0.4), 0 8px 32px rgba(0,200,100,0.25), 0 2px 8
+  box-shadow: 0 0 0 1px rgba(0,200,100,0.4), 0 8px 32px rgba(0,200,100,0.25), 0 2px 8px rgba(0,0,0,0.4);
+  display: flex; align-items: center; justify-content: center;
+  transition: transform 0.2s, box-shadow 0.2s;
+  overflow: hidden;
+}
+.fab::before {
+  content: ''; position: absolute; inset: 0; border-radius: 18px;
+  background: linear-gradient(145deg, rgba(0,200,100,0.12) 0%, transparent 60%);
+  pointer-events: none;
+}
+.fab:active { transform: scale(0.88); box-shadow: 0 0 0 1px rgba(0,200,100,0.6), 0 4px 16px rgba(0,200,100,0.35); }
+.fab svg { position: relative; z-index: 1; filter: drop-shadow(0 0 6px rgba(0,200,100,0.6)); }
+
+/* Toast */
+.toast {
+  position: fixed; top: 80px; left: 50%; transform: translateX(-50%);
+  background: #00c864; color: #071a2e; border-radius: 20px;
+  padding: 10px 20px; font-size: 13px; font-weight: 700;
+  z-index: 300; white-space: nowrap;
+  animation: toastIn 0.3s ease, toastOut 0.4s ease 2s forwards;
+  font-family: 'DM Sans', sans-serif;
+  box-shadow: 0 4px 20px rgba(0,200,100,0.4);
+}
+@keyframes toastIn { from{opacity:0;transform:translateX(-50%) translateY(-10px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
+@keyframes toastOut { from{opacity:1} to{opacity:0;pointer-events:none} }
+
+/* Calc Modal */
+.calc-input {
+  width: 100%; background: var(--input-bg); border: 1px solid rgba(0,200,100,0.3);
+  border-radius: 10px; padding: 11px 13px; color: var(--text); font-size: 16px;
+  font-weight: 700; outline: none; font-family: 'DM Sans', sans-serif; margin-top: 6px;
+}
+.calc-input::placeholder { color: var(--muted); opacity: 0.5; }
+.calc-result {
+  background: rgba(0,200,100,0.08); border: 1px solid rgba(0,200,100,0.2);
+  border-radius: 12px; padding: 14px 16px; margin: 14px 0;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.calc-result-label { font-size: 12px; color: var(--muted); }
+.calc-result-val { font-size: 22px; font-weight: 900; color: var(--green); font-family: 'Syne', sans-serif; font-variant-numeric: tabular-nums; }
+.calc-result-val.zero { color: var(--muted); font-size: 18px; }
+.btn-add-tips { width: 100%; padding: 13px; background: linear-gradient(135deg,#00c864,#00a855); border: none; border-radius: 12px; color: #fff; font-weight: 800; cursor: pointer; font-size: 15px; font-family: 'DM Sans', sans-serif; margin-bottom: 8px; }
+.btn-add-tips:disabled { opacity: 0.3; cursor: not-allowed; }
+.btn-reset-calc { width: 100%; padding: 11px; background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; color: var(--muted); font-weight: 700; cursor: pointer; font-size: 13px; font-family: 'DM Sans', sans-serif; }
+
+/* Logout btn */
+.logout-btn {
+  background: rgba(255,60,60,0.1); border: 1px solid rgba(255,60,60,0.25);
+  border-radius: 8px; padding: 4px 10px; font-size: 10px;
+  font-weight: 700; color: #ff6060; cursor: pointer;
+  font-family: 'DM Sans', sans-serif; letter-spacing: 0.5px;
+  transition: all 0.2s; margin-top: 2px;
+}
+.logout-btn:active { background: rgba(255,60,60,0.25); }
+
+/* Tips badge on income */
+.tips-row { display: flex; justify-content: space-between; align-items: center; padding: 3px 0; font-size: 12px; }
+.tips-total-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-top: 1px solid var(--border); margin-top: 4px; }
+
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
+</style>
+</head>
+<body>
+<div class="bg-glow"></div>
+
+<!-- PIN SCREEN -->
+<div id="pinScreen">
+  <div class="pin-ticker">
+    <div class="pin-ticker-inner">
+      &nbsp;&nbsp;&nbsp;🚗 GRAB DRIVER INCOME TRACKER &nbsp;•&nbsp; © Gentara Anugrah &nbsp;•&nbsp; 🚗 GRAB DRIVER INCOME TRACKER &nbsp;•&nbsp; © Gentara Anugrah &nbsp;•&nbsp; 🚗 GRAB DRIVER INCOME TRACKER &nbsp;•&nbsp; © Gentara Anugrah &nbsp;&nbsp;&nbsp;
+    </div>
+  </div>
+  <div class="pin-wrap">
+    <div class="pin-logo"><span class="pin-logo-text">GT</span></div>
+    <div class="pin-badge">ACCESS CONTROL SYSTEM</div>
+    <div class="pin-title" id="pinTitle">Income Tracker</div>
+    <div class="pin-sub" id="pinSub">Masukkan <span>PIN 6 digit</span> untuk akses</div>
+    <div class="pin-mode-tabs">
+      <button class="pin-mode-tab active" id="tabMasuk" onclick="setPinMode('masuk')">MASUK</button>
+      <button class="pin-mode-tab inactive" id="tabGanti" onclick="setPinMode('ganti')">GANTI PIN</button>
+    </div>
+    <div class="pin-dots" id="pinDots">
+      <div class="pin-dot" id="d0"></div>
+      <div class="pin-dot" id="d1"></div>
+      <div class="pin-dot" id="d2"></div>
+      <div class="pin-dot" id="d3"></div>
+      <div class="pin-dot" id="d4"></div>
+      <div class="pin-dot" id="d5"></div>
+    </div>
+    <div class="pin-error" id="pinError"></div>
+    <div class="pin-grid">
+      <button class="pin-key" onclick="pinKey('1')">1</button>
+      <button class="pin-key" onclick="pinKey('2')">2</button>
+      <button class="pin-key" onclick="pinKey('3')">3</button>
+      <button class="pin-key" onclick="pinKey('4')">4</button>
+      <button class="pin-key" onclick="pinKey('5')">5</button>
+      <button class="pin-key" onclick="pinKey('6')">6</button>
+      <button class="pin-key" onclick="pinKey('7')">7</button>
+      <button class="pin-key" onclick="pinKey('8')">8</button>
+      <button class="pin-key" onclick="pinKey('9')">9</button>
+      <button class="pin-key empty"></button>
+      <button class="pin-key" onclick="pinKey('0')">0</button>
+      <button class="pin-key del" onclick="pinDel()">⌫ Hapus</button>
+    </div>
+    <div class="pin-footer-note">© Gentara Anugrah • Grab Driver Income Tracker</div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app" style="display:none">
+  <!-- Ticker -->
+  <div class="ticker-wrap">
+    <div class="ticker-inner">
+      🚗 GRAB DRIVER INCOME TRACKER &nbsp;•&nbsp; © Gentara Anugrah &nbsp;•&nbsp; 🚗 GRAB DRIVER INCOME TRACKER &nbsp;•&nbsp; © Gentara Anugrah &nbsp;•&nbsp; 🚗 GRAB DRIVER INCOME TRACKER &nbsp;•&nbsp; © Gentara Anugrah &nbsp;•&nbsp; 🚗 GRAB DRIVER INCOME TRACKER &nbsp;•&nbsp; © Gentara Anugrah &nbsp;&nbsp;
+    </div>
+  </div>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-top">
+      <div class="header-brand">
+        <div class="brand-label">Grab Driver</div>
+        <div class="brand-title">Income Tracker</div>
+      </div>
+      <div class="header-right">
+        <div class="header-clock">
+          <div class="clock-date" id="clockDate"></div>
+          <div class="clock-time" id="clockTime"></div>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center">
+          <button class="theme-btn" onclick="toggleTheme()" id="themeBtn">🌙 Dark</button>
+          <button class="logout-btn" onclick="logout()">🚪 Keluar</button>
+        </div>
+      </div>
+    </div>
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('today')">Hari Ini</button>
+      <button class="tab inactive" onclick="switchTab('week')">Mingguan</button>
+      <button class="tab inactive" onclick="switchTab('month')">Bulanan</button>
+    </div>
+  </div>
+
+  <div class="content" id="content"></div>
+
+  <div class="footer">© Gentara Anugrah All Rights Reserved &nbsp;•&nbsp; Grab Driver Income Tracker</div>
+  <!-- Floating Calc Button -->
+  <button class="fab" onclick="openCalc()" title="Kalkulator Kembalian">
+    <svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="calcGrad" x1="0" y1="0" x2="30" y2="30" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stop-color="#00f07a"/>
+          <stop offset="100%" stop-color="#00a855"/>
+        </linearGradient>
+        <linearGradient id="screenGrad" x1="0" y1="0" x2="14" y2="8" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stop-color="#00f07a" stop-opacity="0.25"/>
+          <stop offset="100%" stop-color="#00c864" stop-opacity="0.08"/>
+        </linearGradient>
+      </defs>
+      <!-- Calculator body -->
+      <rect x="4" y="2" width="22" height="26" rx="4" fill="none" stroke="url(#calcGrad)" stroke-width="1.5"/>
+      <!-- Screen -->
+      <rect x="7" y="5" width="16" height="7" rx="2" fill="url(#screenGrad)" stroke="url(#calcGrad)" stroke-width="0.8" stroke-opacity="0.6"/>
+      <!-- Screen Rp symbol -->
+      <text x="10" y="11" font-size="5.5" fill="url(#calcGrad)" font-family="sans-serif" font-weight="700">Rp</text>
+      <!-- Screen value dots -->
+      <rect x="19" y="7.5" width="2" height="1.5" rx="0.5" fill="url(#calcGrad)" opacity="0.9"/>
+      <rect x="19" y="10" width="3.5" height="1.5" rx="0.5" fill="url(#calcGrad)" opacity="0.6"/>
+      <!-- Button rows -->
+      <!-- Row 1 -->
+      <rect x="7" y="15" width="4" height="3" rx="1" fill="url(#calcGrad)" opacity="0.7"/>
+      <rect x="13" y="15" width="4" height="3" rx="1" fill="url(#calcGrad)" opacity="0.5"/>
+      <rect x="19" y="15" width="4" height="3" rx="1" fill="url(#calcGrad)" opacity="0.5"/>
+      <!-- Row 2 -->
+      <rect x="7" y="20" width="4" height="3" rx="1" fill="url(#calcGrad)" opacity="0.5"/>
+      <rect x="13" y="20" width="4" height="3" rx="1" fill="url(#calcGrad)" opacity="0.5"/>
+      <rect x="19" y="20" width="4" height="3" rx="1" fill="#00f07a" opacity="0.9"/>
+      <!-- Plus sign on last button -->
+      <line x1="21" y1="21" x2="21" y2="23" stroke="#071a2e" stroke-width="1.2" stroke-linecap="round"/>
+      <line x1="20" y1="22" x2="22" y2="22" stroke="#071a2e" stroke-width="1.2" stroke-linecap="round"/>
+      <!-- Row 3 -->
+      <rect x="7" y="25" width="10" height="3" rx="1" fill="url(#calcGrad)" opacity="0.4"/>
+      <rect x="19" y="25" width="4" height="3" rx="1" fill="url(#calcGrad)" opacity="0.35"/>
+    </svg>
+  </button>
+</div>
+
+<!-- Calculator Modal -->
+<div class="modal-overlay" id="calcModal" onclick="calcBgClick(event)">
+  <div class="modal-box">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+      <div class="modal-title">🧮 Kalkulator Tunai</div>
+      <button onclick="closeCalc()" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer">✕</button>
+    </div>
+    <div class="modal-sub">Hitung kembalian yang tidak diambil customer</div>
+    <div style="margin-bottom:10px">
+      <div style="font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">Uang Diterima dari Customer</div>
+      <input class="calc-input" type="number" id="calcTerima" placeholder="50000" oninput="hitungKembalian()"/>
+    </div>
+    <div style="margin-bottom:10px">
+      <div style="font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">Tagihan / Ongkir</div>
+      <input class="calc-input" type="number" id="calcTagihan" placeholder="43000" oninput="hitungKembalian()"/>
+    </div>
+    <div class="calc-result">
+      <div>
+        <div class="calc-result-label">Tips Kembalian</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px" id="calcFormula">-</div>
+      </div>
+      <div class="calc-result-val" id="calcKembalian">Rp 0</div>
+    </div>
+    <button class="btn-add-tips" id="btnAddTips" onclick="tambahTips()" disabled>➕ Tambah ke Tips Hari Ini</button>
+    <button class="btn-reset-calc" onclick="resetCalc()">🔄 Hitung Ulang</button>
+    <div style="margin-top:12px;padding:10px;background:var(--card-bg);border-radius:10px;border:1px solid var(--border)">
+      <div style="font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">Total Tips Hari Ini</div>
+      <div style="font-size:18px;font-weight:800;color:var(--green);font-family:'Syne',sans-serif" id="totalTipsDisplay">Rp 0</div>
+    </div>
+  </div>
+</div>
+
+<!-- OFF Modal -->
+<div class="modal-overlay" id="offModal" onclick="modalBgClick(event)">
+  <div class="modal-box">
+    <div class="modal-title">🔴 Turn OFF</div>
+    <div class="modal-sub">Mau ngapain sekarang?</div>
+    <textarea class="modal-textarea" id="offNote" rows="3" placeholder="cth: jemput anak, makan siang, istirahat, pulang..."></textarea>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal()">Batal</button>
+      <button class="btn-off" onclick="confirmOff()">🔴 OFF Sekarang</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============ CONSTANTS ============
+const TARGET_DAILY = 150000;
+const TARGET_WEEKLY = 900000;
+const TARGET_MONTHLY = 3900000;
+const BBM_COST = 20000;
+const DEFAULT_PIN = '700115';
+const DAYS = ['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
+let todayTips = parseInt(localStorage.getItem('grab_tips_'+new Date().toDateString())||'0',10);
+const MONTHS = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+
+// ============ PIN STATE ============
+let pinInput = '';
+let pinMode = 'masuk'; // masuk | ganti_old | ganti_new | ganti_confirm
+let pinNewTemp = '';
+let storedPin = localStorage.getItem('grab_pin') || DEFAULT_PIN;
+
+function setPinMode(mode) {
+  pinMode = mode === 'ganti' ? 'ganti_old' : 'masuk';
+  pinInput = ''; pinNewTemp = '';
+  document.getElementById('tabMasuk').className = 'pin-mode-tab ' + (mode==='masuk'?'active':'inactive');
+  document.getElementById('tabGanti').className = 'pin-mode-tab ' + (mode==='ganti'?'active':'inactive');
+  updatePinSub(); updatePinDots(); clearPinError();
+}
+function updatePinSub() {
+  const el = document.getElementById('pinSub');
+  if (pinMode === 'masuk') el.innerHTML = 'Masukkan <span>PIN 6 digit</span> untuk akses';
+  else if (pinMode === 'ganti_old') el.innerHTML = 'Masukkan <span>PIN lama</span> dulu';
+  else if (pinMode === 'ganti_new') el.innerHTML = 'Masukkan <span>PIN baru</span> 6 digit';
+  else if (pinMode === 'ganti_confirm') el.innerHTML = '<span>Ulangi PIN baru</span> untuk konfirmasi';
+}
+function updatePinDots() {
+  for (let i = 0; i < 6; i++) {
+    document.getElementById('d'+i).className = 'pin-dot' + (i < pinInput.length ? ' filled' : '');
+  }
+}
+function clearPinError() { document.getElementById('pinError').textContent = ''; }
+function showPinError(msg) { document.getElementById('pinError').textContent = msg; }
+
+function pinKey(k) {
+  if (pinInput.length >= 6) return;
+  pinInput += k;
+  updatePinDots();
+  clearPinError();
+  if (pinInput.length === 6) setTimeout(checkPin, 150);
+}
+function pinDel() {
+  pinInput = pinInput.slice(0,-1);
+  updatePinDots(); clearPinError();
+}
+function checkPin() {
+  if (pinMode === 'masuk') {
+    if (pinInput === storedPin) { enterApp(); }
+    else { showPinError('PIN salah, coba lagi'); pinInput=''; updatePinDots(); }
+  } else if (pinMode === 'ganti_old') {
+    if (pinInput === storedPin) { pinMode='ganti_new'; pinInput=''; updatePinDots(); updatePinSub(); clearPinError(); }
+    else { showPinError('PIN lama salah'); pinInput=''; updatePinDots(); }
+  } else if (pinMode === 'ganti_new') {
+    pinNewTemp = pinInput; pinMode='ganti_confirm'; pinInput=''; updatePinDots(); updatePinSub();
+  } else if (pinMode === 'ganti_confirm') {
+    if (pinInput === pinNewTemp) {
+      storedPin = pinInput; localStorage.setItem('grab_pin', storedPin);
+      showPinError('✅ PIN berhasil diganti!');
+      setTimeout(() => { setPinMode('masuk'); }, 1200);
+    } else { showPinError('PIN tidak cocok, ulangi dari awal'); pinMode='ganti_new'; pinNewTemp=''; pinInput=''; updatePinDots(); updatePinSub(); }
+  }
+}
+function enterApp() {
+  document.getElementById('pinScreen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  render(); startClock();
+}
+
+// ============ THEME ============
+let isDark = true;
+function toggleTheme() {
+  isDark = !isDark;
+  document.body.className = isDark ? '' : 'light';
+  document.getElementById('pinScreen').className = isDark ? '' : 'light';
+  document.getElementById('themeBtn').textContent = isDark ? '🌙 Dark' : '☀️ Light';
+  localStorage.setItem('grab_theme', isDark ? 'dark' : 'light');
+}
+// Load theme
+const savedTheme = localStorage.getItem('grab_theme');
+if (savedTheme === 'light') { isDark = false; document.body.className = 'light'; document.getElementById('pinScreen').className = 'light'; }
+
+// ============ APP STATE ============
+let currentTab = 'today';
+let isOn = false;
+let currentOnTime = null;
+let sessions = [];
+let savedIncome = null;
+let savedNote = '';
+let allDays = [];
+let showIncomeInput = false;
+
+// ============ STORAGE ============
+function load() {
+  try {
+    const d = JSON.parse(localStorage.getItem('grab_tracker_v3') || '{}');
+    allDays = d.allDays || [];
+    const todayData = allDays.find(x => x.date === todayKey());
+    if (todayData) {
+      sessions = todayData.sessions || [];
+      savedIncome = todayData.income ?? null;
+      savedNote = todayData.note || '';
+    }
+  } catch(e) {}
+}
+function save() {
+  try {
+    const updated = upsertDay(allDays, todayKey(), { sessions, income: savedIncome, note: savedNote });
+    allDays = updated;
+    localStorage.setItem('grab_tracker_v3', JSON.stringify({ allDays }));
+  } catch(e) {}
+}
+function upsertDay(days, key, patch) {
+  const idx = days.findIndex(d => d.date === key);
+  if (idx >= 0) { const c=[...days]; c[idx]={...c[idx],...patch}; return c; }
+  return [...days, { date:key, income:null, sessions:[], note:'', libur:false, ...patch }];
+}
+function todayKey() { return new Date().toDateString(); }
+function getDay(key) { return allDays.find(d => d.date === key) || { date:key, income:null, sessions:[], note:'', libur:false }; }
+
+// ============ FORMATTING ============
+function fRp(val) { return 'Rp ' + Math.round(val).toLocaleString('id-ID'); }
+function fTime(d) { return d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',second:'2-digit'}); }
+function fTimeShort(ts) { return new Date(ts).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}); }
+function fDuration(ms) { const s=Math.floor(ms/1000),h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60; return `${pad(h)}:${pad(m)}:${pad(sec)}`; }
+function pad(n) { return String(n).padStart(2,'0'); }
+function pct(val,target) { return Math.min(100,Math.round((val/target)*100)); }
+
+// ============ TIME ============
+function totalMs() {
+  const c = sessions.reduce((a,s)=>a+(s.duration||0),0);
+  const l = isOn && currentOnTime ? (Date.now()-currentOnTime) : 0;
+  return c + l;
+}
+
+// ============ CLOCK ============
+let clockInt = null;
+function startClock() {
+  if (clockInt) clearInterval(clockInt);
+  clockInt = setInterval(tickClock, 1000);
+  tickClock();
+}
+function tickClock() {
+  const now = new Date();
+  const dateEl = document.getElementById('clockDate');
+  const timeEl = document.getElementById('clockTime');
+  if (dateEl) dateEl.textContent = DAYS[now.getDay()] + ', ' + now.getDate() + ' ' + MONTHS[now.getMonth()];
+  if (timeEl) timeEl.textContent = fTime(now);
+  const ms = totalMs();
+  const t = document.getElementById('liveTimer'); if(t) t.textContent = fDuration(ms);
+  const ld = document.getElementById('liveDur'); if(ld && isOn && currentOnTime) ld.textContent = fDuration(Date.now()-currentOnTime);
+  if (savedIncome && ms > 0) {
+    const rH=document.getElementById('rateHour'), rM=document.getElementById('rateMin'), rS=document.getElementById('rateSec');
+    if(rH) rH.textContent = fRp(savedIncome/(ms/3600000));
+    if(rM) rM.textContent = fRp(savedIncome/(ms/60000));
+    if(rS) rS.textContent = fRp(savedIncome/(ms/1000));
+  }
+}
+
+// ============ TABS ============
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach((t,i) => {
+    t.className = 'tab ' + (['today','week','month'][i]===tab?'active':'inactive');
+  });
+  render();
+}
+
+// ============ ACTIONS ============
+function toggleOnOff() {
+  if (!isOn) { isOn=true; currentOnTime=Date.now(); render(); }
+  else { document.getElementById('offModal').classList.add('show'); document.getElementById('offNote').value=''; setTimeout(()=>document.getElementById('offNote').focus(),200); }
+}
+function closeModal() { document.getElementById('offModal').classList.remove('show'); }
+function modalBgClick(e) { if(e.target===document.getElementById('offModal')) closeModal(); }
+function confirmOff() {
+  const note = document.getElementById('offNote').value.trim() || 'Selesai';
+  const offTime = Date.now();
+  sessions.push({ onTime:currentOnTime, offTime, note, duration:offTime-currentOnTime });
+  isOn=false; currentOnTime=null; closeModal(); save(); render();
+}
+function openIncomeInput() { showIncomeInput=true; render(); setTimeout(()=>document.getElementById('incomeInput')?.focus(),100); }
+function closeIncomeInput() { showIncomeInput=false; render(); }
+function saveIncome() {
+  const val = parseInt((document.getElementById('incomeInput')?.value||'').replace(/\D/g,''),10);
+  if (!isNaN(val) && val>0) { savedIncome=val; showIncomeInput=false; save(); render(); }
+}
+function incomeKeydown(e) { if(e.key==='Enter') saveIncome(); }
+function saveNote() {
+  savedNote = document.getElementById('noteInput')?.value || '';
+  save();
+}
+
+// ============ PAST INCOME ============
+let editingDayKey = null;
+function canEditDay(dateKey) {
+  const maxBack = new Date(); maxBack.setDate(maxBack.getDate()-2); maxBack.setHours(0,0,0,0);
+  return new Date(dateKey) >= maxBack && new Date(dateKey) <= new Date();
+}
+function openIncomeForDay(dateKey) {
+  if (dateKey === todayKey()) { switchTab('today'); showIncomeInput=true; render(); setTimeout(()=>document.getElementById('incomeInput')?.focus(),100); return; }
+  editingDayKey = dateKey; render();
+  setTimeout(()=>document.getElementById('pastInp_'+dateKey)?.focus(),150);
+}
+function savePastIncome(dateKey) {
+  const el = document.getElementById('pastInp_'+dateKey);
+  const val = parseInt((el?.value||'').replace(/\D/g,''),10);
+  if (!isNaN(val) && val>0) {
+    const existing = getDay(dateKey);
+    allDays = upsertDay(allDays, dateKey, {...existing, income:val});
+    localStorage.setItem('grab_tracker_v3', JSON.stringify({allDays}));
+    editingDayKey = null; render();
+  }
+}
+function cancelPastIncome() { editingDayKey=null; render(); }
+
+// ============ LIBUR ============
+function toggleLibur(dateKey) {
+  const now = new Date();
+  const maxBack = new Date(); maxBack.setDate(maxBack.getDate()-2);
+  const target = new Date(dateKey);
+  if (target < maxBack) return;
+  const existing = getDay(dateKey);
+  const updated = upsertDay(allDays, dateKey, { ...existing, libur: !existing.libur });
+  allDays = updated;
+  localStorage.setItem('grab_tracker_v3', JSON.stringify({ allDays }));
+  if (dateKey === todayKey()) { /* refresh today state */ }
+  render();
+}
+function canToggleLibur(dateKey) {
+  const maxBack = new Date(); maxBack.setDate(maxBack.getDate()-2);
+  return new Date(dateKey) >= maxBack && new Date(dateKey) <= new Date();
+}
+
+// ============ DATA ============
+function getWeekDays() {
+  const days = [];
+  for (let i=6;i>=0;i--) { const d=new Date(); d.setDate(d.getDate()-i); const key=d.toDateString(); const dayData=getDay(key); days.push({...dayData, date:d, key}); }
+  return days;
+}
+function getMonthDays() {
+  const now=new Date();
+  return allDays.filter(d=>{ const dd=new Date(d.date); return dd.getMonth()===now.getMonth()&&dd.getFullYear()===now.getFullYear(); });
+}
+
+// ============ RENDER ============
+function render() { const c=document.getElementById('content'); if(!c) return; if(currentTab==='today') c.innerHTML=renderToday(); else if(currentTab==='week') c.innerHTML=renderWeek(); else c.innerHTML=renderMonth(); }
+
+function renderToday() {
+  const ms=totalMs(), liveMs=isOn&&currentOnTime?(Date.now()-currentOnTime):0;
+  const income=(savedIncome||0)+todayTips, dp=pct(income,TARGET_DAILY);
+  const bersih=income-BBM_COST;
+  const perH=ms>0&&savedIncome?fRp(savedIncome/(ms/3600000)):'-';
+  const perM=ms>0&&savedIncome?fRp(savedIncome/(ms/60000)):'-';
+  const perS=ms>0&&savedIncome?fRp(savedIncome/(ms/1000)):'-';
+  const todayData=getDay(todayKey());
+  const isLibur=todayData.libur||false;
+
+  return `<div class="fade-in">
+    <!-- ON/OFF -->
+    <div class="onoff-wrap">
+      <button class="onoff-btn ${isOn?'on':'off'}" onclick="toggleOnOff()">
+        <span class="onoff-icon">${isOn?'🟢':'⭕'}</span>
+        <span class="onoff-label">${isOn?'ON':'OFF'}</span>
+      </button>
+      ${isOn&&currentOnTime?`<div class="onoff-since"><div class="since-label">Mulai Sejak</div><div class="since-time">${fTimeShort(currentOnTime)}</div></div>`:''}
+      ${!isOn&&sessions.length===0?`<div style="font-size:12px;color:var(--muted)">Tap untuk mulai kerja</div>`:''}
+    </div>
+
+    <!-- Timer -->
+    <div class="card card-green" style="text-align:center">
+      <div class="card-label label-green">Total Waktu Efektif</div>
+      <div class="timer-display num-green" id="liveTimer">${fDuration(ms)}</div>
+    </div>
+
+    <!-- Sessions -->
+    ${sessions.length>0||isOn?`
+    <div style="margin-bottom:12px">
+      <div class="section-title">Log Sesi Hari Ini</div>
+      <div class="session-list">
+        ${sessions.map(s=>`
+          <div class="session-item">
+            <div>
+              <div class="session-time">${fTimeShort(s.onTime)} → ${fTimeShort(s.offTime)}</div>
+              <div class="session-note">OFF: ${s.note}</div>
+            </div>
+            <div class="session-dur">${fDuration(s.duration)}</div>
+          </div>`).join('')}
+        ${isOn&&currentOnTime?`
+          <div class="session-item live">
+            <div>
+              <div class="session-time live">${fTimeShort(currentOnTime)} → sekarang</div>
+              <div class="session-note live">🟢 Sedang berjalan</div>
+            </div>
+            <div class="session-dur" id="liveDur">${fDuration(liveMs)}</div>
+          </div>`:''}
+      </div>
+    </div>`:''}
+
+    <!-- Income -->
+    <div class="card card-gold">
+      <div class="card-label label-gold">Penghasilan Hari Ini</div>
+      ${savedIncome?`
+        ${todayTips>0?`
+          <div class="tips-row"><span style="color:var(--muted)">Income Grab</span><span style="font-weight:700">${fRp(savedIncome)}</span></div>
+          <div class="tips-row"><span style="color:#00c864">+ Tips Tunai</span><span style="font-weight:700;color:#00c864">+ ${fRp(todayTips)}</span></div>
+          <div class="tips-total-row"><span style="font-weight:800">Total</span><span class="big-num num-gold" style="font-size:24px">${fRp(savedIncome+todayTips)}</span></div>
+        `:`<div class="big-num num-gold">${fRp(savedIncome)}</div>`}
+        <div class="progress-wrap">
+          <div class="progress-meta">
+            <span>Target: ${fRp(TARGET_DAILY)}</span>
+            <span class="progress-pct" style="color:${dp>=100?'var(--green)':'var(--gold)'}">${dp}%</span>
+          </div>
+          <div class="progress-track"><div class="progress-fill ${dp>=100?'fill-green':'fill-gold'}" style="width:${dp}%"></div></div>
+          <div class="progress-note ${dp>=100?'success':''}">${dp>=100?'🎉 Target tercapai!':'Kurang '+fRp(TARGET_DAILY-income)}</div>
+        </div>
+        <button class="btn-outline-gold" onclick="openIncomeInput()">Edit Penghasilan</button>
+      `:`
+        ${todayTips>0?`<div style="margin-bottom:8px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">Tips tunai terkumpul:</div><div style="font-size:20px;font-weight:800;color:#00c864">${fRp(todayTips)}</div></div>`:''}
+        <div style="font-size:13px;color:var(--muted);margin-bottom:11px">Belum ada input income Grab</div>
+        ${!showIncomeInput?`<button class="btn btn-primary" onclick="openIncomeInput()">+ Input Penghasilan</button>`:''}
+      `}
+      ${showIncomeInput?`
+        <div style="margin-top:10px">
+          <div style="font-size:11px;color:var(--gold);margin-bottom:6px">Income bersih dari Grab (Rp):</div>
+          <div class="income-input-wrap">
+            <input class="income-input" type="number" id="incomeInput" placeholder="150000" onkeydown="incomeKeydown(event)"/>
+            <button class="btn btn-gold" onclick="saveIncome()">Simpan</button>
+            <button class="btn btn-ghost" onclick="closeIncomeInput()">✕</button>
+          </div>
+        </div>`:''}
+    </div>
+
+    <!-- BBM -->
+    ${savedIncome?`
+    <div class="card card-red">
+      <div class="card-label label-red">⛽ Kalkulator BBM</div>
+      <div class="bbm-row"><span class="bbm-label">Penghasilan</span><span class="bbm-val">${fRp(savedIncome)}</span></div>
+      <div class="bbm-row"><span class="bbm-label">Biaya BBM</span><span class="bbm-val" style="color:#ff6060">- ${fRp(BBM_COST)}</span></div>
+      <div class="bbm-divider"></div>
+      <div class="bbm-row"><span class="bbm-label" style="font-weight:700">Bersih setelah BBM</span><span class="bbm-val" style="color:var(--green);font-size:16px">${fRp(bersih)}</span></div>
+    </div>`:''}
+
+    <!-- Earning Rate -->
+    ${savedIncome&&ms>0?`
+    <div style="margin-bottom:12px">
+      <div class="section-title">Earning Rate</div>
+      <div class="rate-grid">
+        <div class="rate-card"><div class="rate-label">Per Jam</div><div class="rate-val" style="font-size:13px" id="rateHour">${perH}</div></div>
+        <div class="rate-card"><div class="rate-label">Per Menit</div><div class="rate-val" style="font-size:12px" id="rateMin">${perM}</div></div>
+        <div class="rate-card"><div class="rate-label">Per Detik</div><div class="rate-val" style="font-size:11px" id="rateSec">${perS}</div></div>
+      </div>
+    </div>`:''}
+
+    <!-- Catatan Harian -->
+    <div class="card">
+      <div class="card-label label-muted">📝 Catatan Hari Ini</div>
+      <textarea class="notes-input" id="noteInput" rows="2" placeholder="Area, kondisi, cuaca, dll..." onblur="saveNote()">${savedNote}</textarea>
+    </div>
+
+    <!-- Hari Libur -->
+    <div style="margin-bottom:12px">
+      <button class="libur-btn ${isLibur?'active':''}" onclick="toggleLibur('${todayKey()}')">
+        ${isLibur?'✅ Hari Ini Ditandai Libur — Tap untuk Batalkan':'🏖️ Tandai Hari Ini sebagai Libur'}
+      </button>
+    </div>
+  </div>`;
+}
+
+function renderWeek() {
+  const weekDays=getWeekDays();
+  const tKey=todayKey();
+  const workDays=weekDays.filter(d=>!d.libur);
+  const weekTotal=workDays.reduce((a,d)=>a+(d.income||0),0);
+  const wp=pct(weekTotal,TARGET_WEEKLY);
+
+  return `<div class="fade-in">
+    <div class="card card-green">
+      <div class="card-label label-green">Total Minggu Ini</div>
+      <div class="big-num num-green">${fRp(weekTotal)}</div>
+      <div class="progress-wrap">
+        <div class="progress-meta"><span>Target: ${fRp(TARGET_WEEKLY)}</span><span class="progress-pct" style="color:${wp>=100?'var(--green)':'var(--gold)'}">${wp}%</span></div>
+        <div class="progress-track"><div class="progress-fill fill-green" style="width:${wp}%"></div></div>
+        <div class="progress-note ${wp>=100?'success':''}">${wp>=100?'🎉 Target minggu ini tercapai!':'Kurang '+fRp(TARGET_WEEKLY-weekTotal)}</div>
+      </div>
+    </div>
+    <div class="section-title">Rincian Per Hari</div>
+    ${weekDays.map(d=>{
+      const isToday=d.key===tKey, p=pct(d.income||0,TARGET_DAILY), canToggle=canToggleLibur(d.key);
+      const canEdit=canEditDay(d.key), isEditing=editingDayKey===d.key;
+      const color=p>=100?'var(--green)':'#ffd700';
+      return `<div class="day-item ${isToday?'today':''} ${d.libur?'libur':''}">
+        <div class="day-row">
+          <div class="day-name ${isToday?'today':''}">
+            ${DAYS[d.date.getDay()]}, ${d.date.getDate()} ${MONTHS[d.date.getMonth()]}
+            ${isToday?'<span class="day-badge">HARI INI</span>':''}
+            ${d.libur?'<span class="day-badge libur-badge">LIBUR</span>':''}
+          </div>
+          <div class="day-income" style="color:${d.libur?'var(--muted)':(d.income>0?color:'#888')}">${d.libur?'Libur':(d.income>0?fRp(d.income):'-')}</div>
+        </div>
+        ${d.income>0&&!d.libur?`<div class="day-bar"><div class="day-bar-fill" style="width:${p}%;background:${p>=100?'var(--green)':'linear-gradient(90deg,#ffc800,#ff9500)'}"></div></div>`:''}
+        ${isEditing?`
+          <div style="margin-top:10px">
+            <div style="font-size:11px;color:var(--gold);margin-bottom:6px">Penghasilan bersih (Rp):</div>
+            <div class="income-input-wrap">
+              <input class="income-input" type="number" id="pastInp_${d.key}" placeholder="150000" style="font-size:14px"/>
+              <button class="btn btn-gold" onclick="savePastIncome('${d.key}')">Simpan</button>
+              <button class="btn btn-ghost" onclick="cancelPastIncome()">✕</button>
+            </div>
+          </div>`:
+          canEdit&&!d.libur?`<button class="btn-outline-gold" style="margin-top:8px;font-size:11px;display:block" onclick="openIncomeForDay('${d.key}')">
+            ${d.income>0?'✏️ Edit Penghasilan':'💰 Input Penghasilan'}
+          </button>`:''}
+        ${canToggle?`<button class="libur-btn ${d.libur?'active':''}" style="margin-top:6px;font-size:11px;padding:7px" onclick="toggleLibur('${d.key}')">${d.libur?'✅ Libur — Batalkan':'🏖️ Tandai Libur'}</button>`:''}
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+function renderMonth() {
+  const now=new Date(), monthDays=getMonthDays();
+  const workDays=monthDays.filter(d=>d.income>0&&!d.libur);
+  const monthTotal=workDays.reduce((a,d)=>a+(d.income||0),0);
+  const mp=pct(monthTotal,TARGET_MONTHLY);
+  const avg=workDays.length>0?monthTotal/workDays.length:0;
+  const est=workDays.length>0?avg*26:0;
+  const totalBBM=workDays.length*BBM_COST;
+  const bersihBulan=monthTotal-totalBBM;
+
+  return `<div class="fade-in">
+    <div class="card card-purple">
+      <div class="card-label label-purple">Total ${MONTHS[now.getMonth()]} ${now.getFullYear()}</div>
+      <div class="big-num num-purple">${fRp(monthTotal)}</div>
+      <div class="progress-wrap">
+        <div class="progress-meta"><span>Target: ${fRp(TARGET_MONTHLY)}</span><span class="progress-pct" style="color:${mp>=100?'var(--green)':'#a67fff'}">${mp}%</span></div>
+        <div class="progress-track"><div class="progress-fill fill-purple" style="width:${mp}%"></div></div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:5px">
+          <span>Hari kerja: ${workDays.length} / 26</span>
+          ${mp<100?`<span>Kurang ${fRp(TARGET_MONTHLY-monthTotal)}</span>`:''}
+        </div>
+        ${mp>=100?`<div class="progress-note success">🎉 Target bulan ini tercapai!</div>`:''}
+      </div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-label">Rata-rata / Hari</div><div class="stat-val" style="color:var(--gold)">${fRp(avg)}</div></div>
+      <div class="stat-card"><div class="stat-label">Estimasi Akhir Bulan</div><div class="stat-val" style="color:#c4a0ff">${fRp(est)}</div></div>
+      <div class="stat-card"><div class="stat-label">Total BBM Bulan Ini</div><div class="stat-val" style="color:#ff6060">- ${fRp(totalBBM)}</div></div>
+      <div class="stat-card"><div class="stat-label">Bersih Setelah BBM</div><div class="stat-val" style="color:var(--green)">${fRp(bersihBulan)}</div></div>
+    </div>
+
+    ${monthDays.length>0?`
+      <div class="section-title">Riwayat Bulan Ini</div>
+      ${[...monthDays].sort((a,b)=>new Date(b.date)-new Date(a.date)).map(d=>{
+        const dd=new Date(d.date); if(isNaN(dd.getTime())) return ""; const p=pct(d.income||0,TARGET_DAILY);
+        return `<div class="day-item ${d.libur?'libur':''}">
+          <div class="day-row">
+            <div class="day-name">${DAYS[dd.getDay()]}, ${dd.getDate()} ${MONTHS[dd.getMonth()]}${d.libur?'<span class="day-badge libur-badge">LIBUR</span>':''}</div>
+            <div>
+              <div class="day-income" style="color:${d.libur?'var(--muted)':(p>=100?'var(--green)':'#ffd700')}">${d.libur?'Libur':fRp(d.income||0)}</div>
+              ${!d.libur?`<div style="font-size:10px;color:var(--muted);text-align:right">${p}% target</div>`:''}
+            </div>
+          </div>
+          ${!d.libur&&(d.income||0)>0?`<div class="day-bar"><div class="day-bar-fill" style="width:${p}%;background:${p>=100?'var(--green)':'linear-gradient(90deg,#ffc800,#ff9500)'}"></div></div>`:''}
+        </div>`;
+      }).join('')}
+    `:`<div class="empty">Belum ada data bulan ini</div>`}
+  </div>`;
+}
+
+// ============ LOGOUT ============
+function logout() {
+  // Reset app state
+  isOn = false; currentOnTime = null; sessions = []; savedIncome = null; savedNote = '';
+  showIncomeInput = false; editingDayKey = null;
+  if (clockInt) { clearInterval(clockInt); clockInt = null; }
+  // Reset PIN state
+  pinInput = ''; pinNewTemp = ''; pinMode = 'masuk';
+  document.getElementById('tabMasuk').className = 'pin-mode-tab active';
+  document.getElementById('tabGanti').className = 'pin-mode-tab inactive';
+  updatePinDots(); clearPinError(); updatePinSub();
+  // Show PIN screen
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('pinScreen').style.display = '';
+}
+
+// ============ CALCULATOR ============
+let calcKembalianVal = 0;
+function openCalc() {
+  document.getElementById('totalTipsDisplay').textContent = fRp(todayTips);
+  document.getElementById('calcModal').classList.add('show');
+}
+function closeCalc() { document.getElementById('calcModal').classList.remove('show'); }
+function calcBgClick(e) { if(e.target===document.getElementById('calcModal')) closeCalc(); }
+function hitungKembalian() {
+  const terima = parseInt(document.getElementById('calcTerima').value||'0',10);
+  const tagihan = parseInt(document.getElementById('calcTagihan').value||'0',10);
+  calcKembalianVal = terima - tagihan;
+  const el = document.getElementById('calcKembalian');
+  const formula = document.getElementById('calcFormula');
+  const btn = document.getElementById('btnAddTips');
+  if (terima > 0 && tagihan > 0) {
+    formula.textContent = fRp(terima) + ' - ' + fRp(tagihan);
+  } else { formula.textContent = '-'; }
+  if (calcKembalianVal > 0) {
+    el.textContent = fRp(calcKembalianVal);
+    el.className = 'calc-result-val';
+    btn.disabled = false;
+  } else {
+    el.textContent = calcKembalianVal < 0 ? '⚠️ Kurang' : 'Rp 0';
+    el.className = 'calc-result-val zero';
+    btn.disabled = true;
+  }
+}
+function resetCalc() {
+  document.getElementById('calcTerima').value = '';
+  document.getElementById('calcTagihan').value = '';
+  document.getElementById('calcKembalian').textContent = 'Rp 0';
+  document.getElementById('calcKembalian').className = 'calc-result-val zero';
+  document.getElementById('calcFormula').textContent = '-';
+  document.getElementById('btnAddTips').disabled = true;
+  calcKembalianVal = 0;
+}
+function tambahTips() {
+  if (calcKembalianVal <= 0) return;
+  todayTips += calcKembalianVal;
+  localStorage.setItem('grab_tips_'+new Date().toDateString(), todayTips);
+  showToast('✅ ' + fRp(calcKembalianVal) + ' ditambahkan ke tips!');
+  document.getElementById('totalTipsDisplay').textContent = fRp(todayTips);
+  resetCalc();
+  render();
+}
+function showToast(msg) {
+  const existing = document.querySelector('.toast');
+  if (existing) existing.remove();
+  const t = document.createElement('div');
+  t.className = 'toast'; t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2600);
+}
+
+// ============ INIT ============
+load();
+</script>
+</body>
+</html>
