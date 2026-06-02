@@ -4,1029 +4,401 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="apple-mobile-web-app-title" content="Grab Tracker"/>
 <meta name="theme-color" content="#0a1628"/>
 <title>Grab Income Tracker</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800;900&family=DM+Sans:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <style>
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
-html,body{height:100%;overflow:hidden;background:#0a1628;font-family:'DM Sans',sans-serif;color:#e8f4fd;}
-body{max-width:480px;margin:0 auto;display:flex;flex-direction:column;}
+:root {
+  --green: #00c864;
+  --green-bright: #00f07a;
+  --green-dark: #00a855;
+  --gold: #ffc800;
+  --blue: #0a1628;
+  --blue-mid: #0d2137;
+  --blue-light: #1a3a5c;
+  --text: #e8f4fd;
+  --muted: #4a7a9b;
+  --border: rgba(255,255,255,0.08);
+  --card-bg: rgba(255,255,255,0.04);
+  --header-bg: rgba(10,22,40,0.95);
+  --page-bg: #0a1628;
+  --input-bg: rgba(255,255,255,0.07);
+  --modal-bg: linear-gradient(180deg,#0d2137 0%,#071a2e 100%);
+  --session-bg: rgba(255,255,255,0.04);
+  --day-bg: rgba(255,255,255,0.04);
+  --stat-bg: rgba(255,255,255,0.04);
+  --rate-bg: rgba(0,100,255,0.08);
+  --rate-border: rgba(0,100,255,0.2);
+  --rate-label: #5b8dd9;
+  --rate-val: #7ab4ff;
+  --ticker-bg: #00c864;
+  --ticker-text: #071a2e;
+}
+.light {
+  --green: #00a84a;
+  --green-bright: #007a35;
+  --green-dark: #006b2c;
+  --gold: #d4a000;
+  --blue: #f0f7f0;
+  --blue-mid: #e8f5e9;
+  --blue-light: #c8e6c9;
+  --text: #1a2e1a;
+  --muted: #5a7a5a;
+  --border: rgba(0,100,50,0.15);
+  --card-bg: rgba(255,255,255,0.85);
+  --header-bg: rgba(240,247,240,0.97);
+  --page-bg: #f0f7f0;
+  --input-bg: rgba(255,255,255,0.9);
+  --modal-bg: linear-gradient(180deg,#ffffff 0%,#e8f5e9 100%);
+  --session-bg: rgba(255,255,255,0.8);
+  --day-bg: rgba(255,255,255,0.8);
+  --stat-bg: rgba(255,255,255,0.8);
+  --rate-bg: rgba(0,168,74,0.08);
+  --rate-border: rgba(0,168,74,0.25);
+  --rate-label: #007a35;
+  --rate-val: #005a28;
+  --ticker-bg: #00a84a;
+  --ticker-text: #ffffff;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; overflow: hidden; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  color: var(--text);
+  background: var(--page-bg);
+  display: flex; flex-direction: column;
+  max-width: 480px; margin: 0 auto;
+  transition: background 0.3s, color 0.3s;
+}
 
-/* THEME VARS */
-body.light{background:#f0f7f0;color:#1a2e1a;}
-body.light .hdr{background:rgba(240,247,240,0.97);border-color:rgba(0,168,74,0.15);}
-body.light .card{background:rgba(255,255,255,0.85);border-color:rgba(0,168,74,0.12);}
-body.light .card-g{background:rgba(0,168,74,0.08);border-color:rgba(0,168,74,0.2);}
-body.light .card-y{background:rgba(212,160,0,0.08);border-color:rgba(212,160,0,0.22);}
-body.light .card-p{background:rgba(100,50,200,0.06);border-color:rgba(100,50,200,0.2);}
-body.light .card-r{background:rgba(255,60,60,0.06);border-color:rgba(255,60,60,0.18);}
-body.light .muted{color:#5a7a5a;}
-body.light .sess-item{background:rgba(255,255,255,0.8);}
-body.light .day-item{background:rgba(255,255,255,0.8);}
-body.light .modal-box{background:linear-gradient(180deg,#fff,#e8f5e9);}
-body.light .inp{background:rgba(255,255,255,0.9);}
-body.light .tab-in{background:rgba(0,168,74,0.06);color:#5a7a5a;}
-body.light .pin-wrap{background:#f0f7f0;}
-body.light .pkey{background:rgba(255,255,255,0.9);border-color:rgba(0,168,74,0.15);color:#1a2e1a;}
-body.light .footer{background:rgba(240,247,240,0.97);border-color:rgba(0,168,74,0.15);}
+/* BG glow dark only */
+.bg-glow {
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background: radial-gradient(ellipse at 15% 10%, rgba(0,200,100,0.07) 0%, transparent 55%),
+              radial-gradient(ellipse at 85% 85%, rgba(0,120,255,0.05) 0%, transparent 55%),
+              linear-gradient(160deg, #0a1628 0%, #0d2137 50%, #071a2e 100%);
+  opacity: 1; transition: opacity 0.3s;
+}
+.light .bg-glow { opacity: 0; }
 
-/* TICKER */
-.ticker{width:100%;height:26px;background:#00c864;overflow:hidden;display:flex;align-items:center;flex-shrink:0;position:relative;z-index:10;}
-.ticker-t{white-space:nowrap;animation:tick 22s linear infinite;font-size:10px;font-weight:700;color:#071a2e;letter-spacing:2.5px;font-family:'Syne',sans-serif;padding-left:100%;}
-@keyframes tick{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+/* ===== PIN SCREEN ===== */
+#pinScreen {
+  position: fixed; inset: 0; z-index: 200;
+  background: var(--page-bg);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: flex-start;
+  overflow-y: auto;
+  transition: background 0.3s;
+}
+.pin-ticker {
+  width: 100%; background: var(--ticker-bg);
+  overflow: hidden; height: 28px; display: flex; align-items: center; flex-shrink: 0;
+}
+.pin-ticker-inner {
+  white-space: nowrap; animation: ticker 18s linear infinite;
+  font-size: 11px; font-weight: 700; color: var(--ticker-text);
+  letter-spacing: 2px; font-family: 'Syne', sans-serif;
+}
+.pin-wrap {
+  width: 100%; max-width: 420px; padding: 30px 24px 40px;
+  display: flex; flex-direction: column; align-items: center;
+}
+.pin-logo {
+  width: 72px; height: 72px; border-radius: 18px;
+  background: linear-gradient(135deg, var(--green) 0%, var(--green-dark) 100%);
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 16px;
+  box-shadow: 0 8px 30px rgba(0,200,100,0.3);
+}
+.pin-logo-text { font-size: 22px; font-weight: 900; color: #fff; font-family: 'Syne', sans-serif; }
+.pin-badge {
+  border: 1px solid var(--green); border-radius: 20px;
+  padding: 4px 14px; font-size: 10px; color: var(--green);
+  letter-spacing: 2px; text-transform: uppercase; font-family: 'Syne', sans-serif;
+  margin-bottom: 10px;
+}
+.pin-title { font-size: 26px; font-weight: 900; font-family: 'Syne', sans-serif; text-align: center; margin-bottom: 6px; }
+.pin-sub { font-size: 13px; color: var(--muted); text-align: center; margin-bottom: 6px; }
+.pin-sub span { color: var(--green); font-weight: 700; }
+.pin-mode-tabs { display: flex; gap: 0; border-radius: 10px; overflow: hidden; border: 1px solid var(--border); margin-bottom: 24px; }
+.pin-mode-tab {
+  flex: 1; padding: 9px 0; font-size: 13px; font-weight: 700;
+  border: none; cursor: pointer; font-family: 'DM Sans', sans-serif;
+  transition: all 0.2s;
+}
+.pin-mode-tab.active { background: var(--green); color: #fff; }
+.pin-mode-tab.inactive { background: transparent; color: var(--muted); }
+.pin-dots { display: flex; gap: 14px; margin-bottom: 28px; }
+.pin-dot {
+  width: 14px; height: 14px; border-radius: 50%;
+  border: 2px solid var(--green); background: transparent;
+  transition: background 0.15s;
+}
+.pin-dot.filled { background: var(--green); }
+.pin-error { font-size: 12px; color: #ff4444; margin-bottom: 10px; min-height: 18px; font-weight: 600; }
+.pin-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; width: 100%; max-width: 300px; }
+.pin-key {
+  padding: 18px 0; border-radius: 14px; border: 1px solid var(--border);
+  background: var(--card-bg); font-size: 22px; font-weight: 700;
+  color: var(--text); cursor: pointer; font-family: 'Syne', sans-serif;
+  transition: all 0.15s; text-align: center;
+}
+.pin-key:active { background: var(--green); color: #fff; transform: scale(0.95); }
+.pin-key.del { font-size: 14px; font-weight: 700; color: var(--muted); }
+.pin-key.empty { background: transparent; border-color: transparent; pointer-events: none; }
+.pin-footer-note { font-size: 11px; color: var(--muted); margin-top: 20px; text-align: center; }
 
-/* PIN SCREEN */
-#pin-screen{position:fixed;inset:0;z-index:9000;background:#0a1628;display:flex;flex-direction:column;align-items:center;overflow-y:auto;}
-body.light #pin-screen{background:#f0f7f0;}
-.pin-wrap{width:100%;max-width:380px;padding:24px 22px 50px;display:flex;flex-direction:column;align-items:center;}
-.pin-logo{width:66px;height:66px;border-radius:18px;background:linear-gradient(135deg,#00c864,#00a855);display:flex;align-items:center;justify-content:center;margin-bottom:12px;box-shadow:0 8px 28px rgba(0,200,100,0.35);}
-.pin-logo span{font-size:22px;font-weight:900;color:#fff;font-family:'Syne',sans-serif;}
-.pin-badge{border:1px solid #00c864;border-radius:20px;padding:3px 14px;font-size:10px;color:#00c864;letter-spacing:2px;text-transform:uppercase;font-family:'Syne',sans-serif;margin-bottom:10px;}
-.pin-title{font-size:24px;font-weight:900;font-family:'Syne',sans-serif;margin-bottom:6px;text-align:center;}
-.pin-sub{font-size:13px;color:#4a7a9b;text-align:center;margin-bottom:16px;line-height:1.5;}
-.pin-sub b{color:#00c864;}
-body.light .pin-sub{color:#5a7a5a;}
-.pin-tabs{display:flex;width:100%;max-width:270px;border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,0.08);margin-bottom:22px;}
-body.light .pin-tabs{border-color:rgba(0,168,74,0.15);}
-.ptab{flex:1;padding:10px 0;font-size:12px;font-weight:700;text-align:center;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s;user-select:none;}
-.ptab.on{background:#00c864;color:#fff;}
-.ptab.off{background:transparent;color:#4a7a9b;}
-.pin-dots{display:flex;gap:13px;margin-bottom:20px;}
-.dot{width:13px;height:13px;border-radius:50%;border:2px solid #00c864;background:transparent;transition:background 0.15s;}
-.dot.filled{background:#00c864;}
-.pin-err{font-size:12px;color:#ff4444;min-height:18px;margin-bottom:12px;font-weight:600;text-align:center;}
-.pkey-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%;max-width:280px;}
-.pkey{padding:17px 0;border-radius:13px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.05);font-size:22px;font-weight:700;color:#e8f4fd;cursor:pointer;font-family:'Syne',sans-serif;text-align:center;user-select:none;transition:background 0.1s,transform 0.1s;}
-.pkey:active,.pkey.pressed{background:#00c864!important;color:#071a2e!important;transform:scale(0.93);}
-.pkey.ghost{background:transparent!important;border-color:transparent!important;pointer-events:none;}
-.pkey.del{font-size:14px;color:#4a7a9b;}
-.pin-actions{display:flex;gap:8px;margin-top:20px;width:100%;max-width:280px;}
-.pin-act-btn{flex:1;padding:11px 0;border-radius:12px;font-size:12px;font-weight:700;cursor:pointer;text-align:center;font-family:'DM Sans',sans-serif;user-select:none;border:none;}
-.btn-export-pin{background:rgba(0,200,100,0.1);border:1px solid rgba(0,200,100,0.3)!important;color:#00c864;}
-.btn-import-pin{background:rgba(0,150,255,0.1);border:1px solid rgba(0,150,255,0.3)!important;color:#5b8dd9;}
-.pin-note{font-size:10px;color:#4a7a9b;margin-top:10px;text-align:center;line-height:1.6;}
-.pin-note b{color:#00c864;}
-.pin-copy{font-size:10px;color:#2a4a6a;margin-top:14px;text-align:center;}
-body.light .pin-copy{color:#8aaa8a;}
+/* ===== TICKER ===== */
+.ticker-wrap {
+  position: sticky; top: 0; z-index: 100;
+  background: var(--ticker-bg);
+  overflow: hidden; height: 26px; display: flex; align-items: center;
+  flex-shrink: 0;
+}
+.ticker-inner {
+  white-space: nowrap; animation: ticker 20s linear infinite;
+  font-size: 10px; font-weight: 700; color: var(--ticker-text);
+  letter-spacing: 2.5px; font-family: 'Syne', sans-serif; padding-left: 100%;
+}
+@keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
 
-/* APP */
-#app{display:none;flex-direction:column;height:100vh;overflow:hidden;}
-.hdr{background:rgba(10,22,40,0.97);border-bottom:1px solid rgba(0,200,100,0.15);padding:11px 15px 0;flex-shrink:0;backdrop-filter:blur(16px);position:relative;z-index:10;}
-.hdr-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
-.brand-lbl{font-size:10px;color:#00c864;letter-spacing:3px;text-transform:uppercase;font-weight:700;font-family:'Syne',sans-serif;}
-.brand-title{font-size:18px;font-weight:900;font-family:'Syne',sans-serif;letter-spacing:-0.3px;}
-.hdr-right{display:flex;flex-direction:column;align-items:flex-end;gap:5px;}
-.clock-d{font-size:10px;color:#4a7a9b;}
-.clock-t{font-size:18px;font-weight:700;color:#00c864;font-variant-numeric:tabular-nums;letter-spacing:1px;}
-.hdr-btns{display:flex;gap:5px;}
-.hdr-btn{border-radius:8px;padding:4px 9px;font-size:10px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;letter-spacing:0.5px;border:none;transition:all 0.2s;user-select:none;}
-.btn-theme{background:rgba(255,255,255,0.07);color:#4a7a9b;border:1px solid rgba(255,255,255,0.08)!important;}
-.btn-logout{background:rgba(255,60,60,0.1);color:#ff6060;border:1px solid rgba(255,60,60,0.25)!important;}
-.tabs{display:flex;gap:4px;padding-bottom:10px;}
-.tab{flex:1;padding:8px 0;border-radius:8px;border:none;cursor:pointer;font-weight:700;font-size:12px;transition:all 0.2s;font-family:'DM Sans',sans-serif;user-select:none;}
-.tab-on{background:#00c864;color:#fff;}
-.tab-in{background:rgba(255,255,255,0.05);color:#4a7a9b;border:1px solid rgba(255,255,255,0.07)!important;}
+/* ===== APP ===== */
+#app { display: flex; flex-direction: column; height: 100vh; overflow: hidden; position: relative; z-index: 1; }
 
-/* CONTENT */
-.content{flex:1;overflow-y:auto;overflow-x:hidden;padding:15px 14px 72px;position:relative;z-index:1;}
-.content::-webkit-scrollbar{width:3px;}
-.content::-webkit-scrollbar-thumb{background:rgba(0,200,100,0.3);border-radius:2px;}
+/* Header */
+.header {
+  position: relative; z-index: 10;
+  background: var(--header-bg);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 16px 0;
+  flex-shrink: 0;
+  transition: background 0.3s;
+}
+.header-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+.header-brand {}
+.brand-label { font-size: 10px; color: var(--green); letter-spacing: 3px; text-transform: uppercase; font-weight: 700; font-family: 'Syne', sans-serif; }
+.brand-title { font-size: 19px; font-weight: 800; letter-spacing: -0.5px; font-family: 'Syne', sans-serif; }
+.header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.header-clock { text-align: right; }
+.clock-date { font-size: 10px; color: var(--muted); }
+.clock-time { font-size: 18px; font-weight: 700; color: var(--green); font-variant-numeric: tabular-nums; letter-spacing: 1px; }
+.theme-btn {
+  background: var(--card-bg); border: 1px solid var(--border);
+  border-radius: 20px; padding: 4px 10px; font-size: 10px;
+  font-weight: 700; color: var(--muted); cursor: pointer;
+  font-family: 'DM Sans', sans-serif; letter-spacing: 1px; text-transform: uppercase;
+  transition: all 0.2s;
+}
+.theme-btn:active { background: var(--green); color: #fff; }
+.tabs { display: flex; gap: 4px; padding-bottom: 10px; }
+.tab {
+  flex: 1; padding: 8px 0; border-radius: 8px; border: none; cursor: pointer;
+  font-weight: 700; font-size: 12px; letter-spacing: 0.3px;
+  transition: all 0.2s; font-family: 'DM Sans', sans-serif;
+}
+.tab.active { background: var(--green); color: #fff; }
+.tab.inactive { background: var(--card-bg); color: var(--muted); border: 1px solid var(--border); }
 
-/* CARDS */
-.card{border-radius:14px;padding:14px 15px;margin-bottom:12px;border:1px solid rgba(255,255,255,0.07);background:rgba(255,255,255,0.04);}
-.card-g{background:rgba(0,200,100,0.08);border-color:rgba(0,200,100,0.2)!important;}
-.card-y{background:rgba(255,200,0,0.07);border-color:rgba(255,200,0,0.2)!important;}
-.card-p{background:rgba(130,80,255,0.08);border-color:rgba(130,80,255,0.2)!important;}
-.card-r{background:rgba(255,60,60,0.07);border-color:rgba(255,60,60,0.2)!important;}
-.card-lbl{font-size:10px;letter-spacing:2px;text-transform:uppercase;font-weight:700;margin-bottom:6px;font-family:'Syne',sans-serif;}
-.lbl-g{color:#00c864;}.lbl-y{color:#ffc800;}.lbl-p{color:#a67fff;}.lbl-r{color:#ff6060;}.lbl-m{color:#4a7a9b;}
-body.light .lbl-p{color:#6432c8;}
-.big-n{font-size:28px;font-weight:900;font-family:'Syne',sans-serif;font-variant-numeric:tabular-nums;}
-.n-g{color:#00e87a;}.n-y{color:#ffd700;}.n-p{color:#c4a0ff;}
-body.light .n-p{color:#6432c8;}
+/* Content */
+.content { flex: 1; overflow-y: auto; overflow-x: hidden; position: relative; z-index: 1; padding: 16px 14px 80px; }
+.content::-webkit-scrollbar { width: 3px; }
+.content::-webkit-scrollbar-thumb { background: rgba(0,200,100,0.3); border-radius: 2px; }
 
-/* PROGRESS */
-.prog{margin-top:9px;}
-.prog-meta{display:flex;justify-content:space-between;font-size:11px;color:#4a7a9b;margin-bottom:4px;}
-.prog-track{height:7px;border-radius:4px;background:rgba(128,128,128,0.15);overflow:hidden;}
-.prog-fill{height:100%;border-radius:4px;transition:width 0.5s;}
-.fill-g{background:#00c864;}.fill-y{background:linear-gradient(90deg,#ffc800,#ff9500);}.fill-p{background:linear-gradient(90deg,#8250ff,#a67fff);}
-.prog-note{font-size:11px;color:#4a7a9b;margin-top:4px;}
-.prog-ok{color:#00c864;font-weight:700;}
+/* Cards */
+.card { border-radius: 14px; padding: 14px 16px; margin-bottom: 12px; border: 1px solid var(--border); background: var(--card-bg); transition: background 0.3s; }
+.card-green { background: rgba(0,200,100,0.08); border-color: rgba(0,200,100,0.2); }
+.card-gold { background: rgba(255,200,0,0.07); border-color: rgba(255,200,0,0.22); }
+.card-purple { background: rgba(130,80,255,0.08); border-color: rgba(130,80,255,0.2); }
+.card-red { background: rgba(255,60,60,0.07); border-color: rgba(255,60,60,0.2); }
+.light .card-green { background: rgba(0,168,74,0.08); }
+.light .card-gold { background: rgba(212,160,0,0.08); }
+.light .card-purple { background: rgba(100,50,200,0.06); }
+.card-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; font-weight: 700; margin-bottom: 6px; font-family: 'Syne', sans-serif; }
+.label-green { color: var(--green); }
+.label-gold { color: var(--gold); }
+.label-purple { color: #a67fff; }
+.label-muted { color: var(--muted); }
+.label-red { color: #ff6060; }
+.light .label-purple { color: #6432c8; }
+.big-num { font-size: 30px; font-weight: 800; font-family: 'Syne', sans-serif; font-variant-numeric: tabular-nums; }
+.num-green { color: var(--green); }
+.num-gold { color: var(--gold); }
+.num-purple { color: #c4a0ff; }
+.light .num-purple { color: #6432c8; }
+
+/* Progress */
+.progress-wrap { margin-top: 10px; }
+.progress-meta { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-bottom: 5px; }
+.progress-pct { font-weight: 700; }
+.progress-track { height: 7px; border-radius: 4px; background: rgba(128,128,128,0.15); overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 4px; transition: width 0.6s ease; }
+.fill-green { background: var(--green); }
+.fill-gold { background: linear-gradient(90deg,#ffc800,#ff9500); }
+.fill-purple { background: linear-gradient(90deg,#8250ff,#a67fff); }
+.progress-note { font-size: 11px; color: var(--muted); margin-top: 5px; }
+.progress-note.success { color: var(--green); font-weight: 700; }
 
 /* ON/OFF */
-.onoff-wrap{display:flex;flex-direction:column;align-items:center;margin-bottom:18px;gap:10px;}
-.onoff-btn{width:122px;height:122px;border-radius:50%;border:none;cursor:pointer;font-weight:900;text-transform:uppercase;font-family:'Syne',sans-serif;transition:all 0.3s;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;user-select:none;}
-.btn-on{background:linear-gradient(145deg,#00d96e,#00a855);color:#071a2e;box-shadow:0 0 50px rgba(0,200,100,0.4),inset 0 1px 0 rgba(255,255,255,0.2);}
-.btn-off{background:rgba(255,255,255,0.04);border:2px solid rgba(255,255,255,0.08)!important;color:#4a7a9b;}
-.btn-on::before{content:'';position:absolute;inset:-13px;border-radius:50%;background:radial-gradient(circle,rgba(0,200,100,0.2) 0%,transparent 70%);animation:glow 2s infinite;}
-@keyframes glow{0%,100%{transform:scale(1);opacity:.6}50%{transform:scale(1.12);opacity:1}}
-.on-icon{font-size:26px;line-height:1;}
-.on-lbl{font-size:13px;}
-.since{text-align:center;}
-.since-lbl{font-size:10px;color:#00c864;letter-spacing:2px;text-transform:uppercase;}
-.since-t{font-size:16px;font-weight:700;color:#00c864;}
-.timer{font-size:34px;font-weight:900;letter-spacing:3px;font-variant-numeric:tabular-nums;font-family:'Syne',sans-serif;}
-
-/* SESSIONS */
-.sess-item{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:10px 13px;display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;}
-.sess-live{background:rgba(0,200,100,0.08);border-color:rgba(0,200,100,0.3)!important;}
-.sess-t{font-size:13px;font-weight:700;}
-.sess-n{font-size:11px;color:#4a7a9b;margin-top:2px;}
-.sess-d{font-size:14px;font-weight:800;color:#00c864;font-variant-numeric:tabular-nums;}
-
-/* RATE GRID */
-.rate-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
-.rate-card{background:rgba(0,100,255,0.08);border:1px solid rgba(0,100,255,0.2);border-radius:12px;padding:11px 6px;text-align:center;}
-body.light .rate-card{background:rgba(0,100,200,0.06);}
-.rate-lbl{font-size:10px;color:#5b8dd9;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;}
-.rate-val{font-weight:800;color:#7ab4ff;font-variant-numeric:tabular-nums;line-height:1.2;}
-
-/* INCOME INPUT */
-.inp-wrap{display:flex;gap:7px;margin-top:9px;}
-.inp{flex:1;background:rgba(255,255,255,0.07);border:1px solid rgba(255,200,0,0.35);border-radius:10px;padding:10px 12px;color:#ffd700;font-size:16px;font-weight:700;outline:none;font-family:'DM Sans',sans-serif;}
-.inp::placeholder{color:rgba(255,200,0,0.25);}
-body.light .inp{color:#a07000;}
-.btn{border:none;border-radius:10px;padding:10px 14px;font-weight:800;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;user-select:none;transition:opacity 0.15s;}
-.btn:active{opacity:0.7;}
-.btn-y{background:#ffc800;color:#071a2e;}
-.btn-gh{background:rgba(255,255,255,0.08);color:#4a7a9b;border:1px solid rgba(255,255,255,0.1);}
-.btn-gy-sm{background:rgba(255,200,0,0.1);border:1px solid rgba(255,200,0,0.3);color:#ffc800;border-radius:8px;padding:6px 12px;font-size:11px;margin-top:8px;cursor:pointer;font-weight:700;font-family:'DM Sans',sans-serif;user-select:none;}
-.btn-primary{background:linear-gradient(135deg,#ffc800,#ff9500);color:#071a2e;border-radius:12px;padding:11px 18px;font-size:14px;}
-
-/* BBM */
-.bbm-row{display:flex;justify-content:space-between;align-items:center;padding:3px 0;font-size:12px;}
-.bbm-div{height:1px;background:rgba(255,255,255,0.08);margin:7px 0;}
-body.light .bbm-div{background:rgba(0,0,0,0.08);}
-
-/* NOTES */
-.notes-inp{width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:10px 12px;color:#e8f4fd;font-size:13px;outline:none;font-family:'DM Sans',sans-serif;resize:none;margin-top:7px;}
-body.light .notes-inp{background:rgba(255,255,255,0.8);color:#1a2e1a;}
-.notes-inp::placeholder{color:#4a7a9b;opacity:0.6;}
-
-/* LIBUR */
-.libur-btn{width:100%;padding:9px;border-radius:10px;border:1px dashed rgba(255,60,60,0.4);background:transparent;color:#ff6060;font-size:12px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:4px;user-select:none;}
-.libur-on{background:rgba(255,60,60,0.1)!important;border-style:solid!important;}
-
-/* DAY ITEMS */
-.day-item{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:11px 13px;margin-bottom:8px;}
-.day-today{background:rgba(0,200,100,0.08)!important;border-color:rgba(0,200,100,0.25)!important;}
-.day-libur{background:rgba(255,60,60,0.05)!important;border-color:rgba(255,60,60,0.18)!important;}
-.day-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;}
-.day-name{font-size:13px;font-weight:700;}
-.day-today .day-name{color:#00e87a;}
-.day-badge{font-size:9px;font-weight:700;letter-spacing:1px;padding:2px 6px;border-radius:4px;margin-left:5px;}
-.badge-today{color:#00c864;background:rgba(0,200,100,0.15);}
-.badge-libur{color:#ff6060;background:rgba(255,60,60,0.12);}
-.day-bar{height:4px;border-radius:2px;background:rgba(128,128,128,0.12);overflow:hidden;}
-.day-bar-fill{height:100%;border-radius:2px;transition:width 0.4s;}
-
-/* STATS */
-.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
-.stat-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:13px;}
-body.light .stat-card{background:rgba(255,255,255,0.8);}
-.stat-lbl{font-size:10px;color:#4a7a9b;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;}
-.stat-val{font-size:15px;font-weight:800;font-variant-numeric:tabular-nums;}
-.sec-title{font-size:10px;color:#4a7a9b;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:9px;font-family:'Syne',sans-serif;}
-
-/* INCOME TIPS BREAKDOWN */
-.inc-row{display:flex;justify-content:space-between;align-items:center;padding:2px 0;font-size:12px;}
-.inc-total{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-top:1px solid rgba(255,255,255,0.08);margin-top:4px;}
-body.light .inc-total{border-color:rgba(0,0,0,0.08);}
-
-/* FLOATING BTN */
-.fab{position:fixed;bottom:50px;right:15px;z-index:60;width:56px;height:56px;border-radius:17px;border:none;cursor:pointer;background:linear-gradient(145deg,#0d2137,#071a2e);box-shadow:0 0 0 1px rgba(0,200,100,0.4),0 8px 30px rgba(0,200,100,0.2);display:flex;align-items:center;justify-content:center;overflow:hidden;user-select:none;}
-.fab::before{content:'';position:absolute;inset:0;border-radius:17px;background:linear-gradient(145deg,rgba(0,200,100,0.12),transparent 60%);pointer-events:none;}
-.fab:active{transform:scale(0.88);}
-body.light .fab{background:linear-gradient(145deg,#e0f0e0,#f0f7f0);}
-
-/* MODAL */
-.modal-ov{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,0.65);backdrop-filter:blur(8px);display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.25s;}
-.modal-ov.show{opacity:1;pointer-events:all;}
-.modal-box{background:linear-gradient(180deg,#0d2137,#071a2e);border:1px solid rgba(0,200,100,0.15);border-radius:22px 22px 0 0;padding:22px 18px 44px;width:100%;max-width:480px;transform:translateY(100%);transition:transform 0.3s ease;}
-body.light .modal-box{background:linear-gradient(180deg,#fff,#e8f5e9);}
-.modal-ov.show .modal-box{transform:translateY(0);}
-.modal-title{font-size:16px;font-weight:800;margin-bottom:4px;font-family:'Syne',sans-serif;}
-.modal-sub{font-size:12px;color:#4a7a9b;margin-bottom:14px;}
-.modal-ta{width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(0,200,100,0.25);border-radius:12px;padding:12px 13px;color:#e8f4fd;font-size:14px;resize:none;outline:none;margin-bottom:13px;font-family:'DM Sans',sans-serif;line-height:1.5;}
-body.light .modal-ta{background:rgba(255,255,255,0.8);color:#1a2e1a;}
-.modal-ta::placeholder{color:#4a7a9b;opacity:0.5;}
-.modal-btns{display:flex;gap:10px;}
-.btn-cancel{flex:1;padding:13px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:12px;color:#4a7a9b;font-weight:700;cursor:pointer;font-size:13px;font-family:'DM Sans',sans-serif;user-select:none;}
-.btn-off{flex:2;padding:13px;background:linear-gradient(135deg,#ff4444,#cc1111);border:none;border-radius:12px;color:#fff;font-weight:800;cursor:pointer;font-size:13px;font-family:'DM Sans',sans-serif;user-select:none;}
-
-/* CALC */
-.calc-inp{width:100%;background:rgba(255,255,255,0.07);border:1px solid rgba(0,200,100,0.3);border-radius:10px;padding:11px 13px;color:#e8f4fd;font-size:16px;font-weight:700;outline:none;font-family:'DM Sans',sans-serif;margin-top:6px;}
-body.light .calc-inp{background:rgba(255,255,255,0.8);color:#1a2e1a;}
-.calc-inp::placeholder{color:#4a7a9b;opacity:0.5;}
-.calc-result{background:rgba(0,200,100,0.08);border:1px solid rgba(0,200,100,0.2);border-radius:12px;padding:13px 15px;margin:13px 0;display:flex;justify-content:space-between;align-items:center;}
-.calc-r-val{font-size:22px;font-weight:900;color:#00c864;font-family:'Syne',sans-serif;font-variant-numeric:tabular-nums;}
-.calc-r-val.zero{color:#4a7a9b;font-size:18px;}
-.btn-tips{width:100%;padding:13px;background:linear-gradient(135deg,#00c864,#00a855);border:none;border-radius:12px;color:#fff;font-weight:800;cursor:pointer;font-size:14px;font-family:'DM Sans',sans-serif;margin-bottom:8px;user-select:none;}
-.btn-tips:disabled{opacity:0.3;cursor:not-allowed;}
-.btn-reset{width:100%;padding:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:12px;color:#4a7a9b;font-weight:700;cursor:pointer;font-size:13px;font-family:'DM Sans',sans-serif;user-select:none;}
-
-/* TOAST */
-.toast{position:fixed;top:76px;left:50%;transform:translateX(-50%);background:#00c864;color:#071a2e;border-radius:20px;padding:9px 18px;font-size:13px;font-weight:700;z-index:9999;white-space:nowrap;font-family:'DM Sans',sans-serif;box-shadow:0 4px 20px rgba(0,200,100,0.4);animation:toastIn 0.3s ease;}
-@keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(-8px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
-
-/* FOOTER */
-.footer{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;z-index:50;background:rgba(10,22,40,0.95);border-top:1px solid rgba(0,200,100,0.1);text-align:center;padding:7px 16px;font-size:10px;color:#2a4a6a;letter-spacing:1px;font-family:'Syne',sans-serif;}
-.empty{text-align:center;color:#2a4a6a;font-size:13px;padding:28px 0;}
-
-/* PAST INCOME */
-.past-inp-wrap{margin-top:9px;}
-.past-inp{width:100%;background:rgba(255,255,255,0.07);border:1px solid rgba(255,200,0,0.3);border-radius:10px;padding:10px 12px;color:#ffd700;font-size:15px;font-weight:700;outline:none;font-family:'DM Sans',sans-serif;margin-bottom:7px;}
-body.light .past-inp{background:rgba(255,255,255,0.8);color:#a07000;}
-.past-inp::placeholder{color:rgba(255,200,0,0.25);}
-.past-btns{display:flex;gap:7px;}
-
-
-/* BACKUP FAB */
-.fab-backup{position:fixed;bottom:50px;right:15px;z-index:9100;width:56px;height:56px;border-radius:17px;border:none;cursor:pointer;background:linear-gradient(145deg,#0d1f3a,#071428);box-shadow:0 0 0 1px rgba(0,128,255,0.45),0 8px 30px rgba(0,128,255,0.2);display:flex;align-items:center;justify-content:center;overflow:hidden;user-select:none;transition:transform 0.2s;}
-.fab-backup::before{content:'';position:absolute;inset:0;border-radius:17px;background:linear-gradient(145deg,rgba(0,128,255,0.14),transparent 60%);pointer-events:none;}
-.fab-backup:active{transform:scale(0.88);}
-body.light .fab-backup{background:linear-gradient(145deg,#e0eaf8,#f0f4ff);}
-
-/* BOTTOM SHEET */
-.bs-ov{position:fixed;inset:0;z-index:9200;background:rgba(0,0,0,0.6);backdrop-filter:blur(8px);display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.25s;}
-.bs-ov.show{opacity:1;pointer-events:all;}
-.bs-box{background:linear-gradient(180deg,#0d2137,#071a2e);border:1px solid rgba(0,128,255,0.2);border-radius:22px 22px 0 0;padding:12px 18px 44px;width:100%;max-width:480px;transform:translateY(100%);transition:transform 0.3s ease;}
-body.light .bs-box{background:linear-gradient(180deg,#fff,#e8f0ff);}
-.bs-ov.show .bs-box{transform:translateY(0);}
-.bs-handle{width:36px;height:4px;border-radius:2px;background:rgba(255,255,255,0.15);margin:0 auto 18px;}
-body.light .bs-handle{background:rgba(0,0,0,0.1);}
-.bs-title{font-size:16px;font-weight:800;font-family:'Syne',sans-serif;margin-bottom:4px;display:flex;align-items:center;gap:8px;}
-.bs-sub{font-size:12px;color:#4a7a9b;margin-bottom:18px;}
-.bs-btn{width:100%;padding:16px;border-radius:14px;border:none;cursor:pointer;display:flex;align-items:center;gap:14px;margin-bottom:10px;transition:opacity 0.15s;user-select:none;}
-.bs-btn:active{opacity:0.75;}
-.bs-btn-export{background:rgba(0,200,100,0.1);border:1px solid rgba(0,200,100,0.25)!important;}
-.bs-btn-import{background:rgba(0,128,255,0.1);border:1px solid rgba(0,128,255,0.25)!important;}
-.bs-btn-icon{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
-.bs-btn-icon-export{background:rgba(0,200,100,0.15);}
-.bs-btn-icon-import{background:rgba(0,128,255,0.15);}
-.bs-btn-text{text-align:left;}
-.bs-btn-label{font-size:14px;font-weight:800;font-family:'DM Sans',sans-serif;}
-.bs-btn-label-export{color:#00c864;}
-.bs-btn-label-import{color:#4a9fff;}
-.bs-btn-desc{font-size:11px;color:#4a7a9b;margin-top:2px;}
-.bs-last-backup{display:flex;align-items:center;gap:8px;padding:12px 14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:12px;margin-top:4px;}
-body.light .bs-last-backup{background:rgba(0,0,0,0.04);border-color:rgba(0,0,0,0.07);}
-.bs-last-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
-.bs-last-info{font-size:11px;color:#4a7a9b;line-height:1.5;}
-.bs-last-info b{color:#e8f4fd;font-size:12px;}
-body.light .bs-last-info b{color:#1a2e1a;}
-
-input[type=number]::-webkit-outer-spin-button,
-input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
-</style>
-</head>
-<body>
-
-<!-- PIN SCREEN -->
-<div id="pin-screen">
-  <div class="ticker"><div class="ticker-t">🚗 GRAB DRIVER INCOME TRACKER &nbsp;•&nbsp; © Gentara Anugrah &nbsp;•&nbsp; 🚗 GRAB DRIVER INCOME TRACKER &nbsp;•&nbsp; © Gentara Anugrah &nbsp;•&nbsp; 🚗 GRAB DRIVER INCOME TRACKER &nbsp;•&nbsp; © Gentara Anugrah &nbsp;&nbsp;</div></div>
-  <div class="pin-wrap">
-    <div class="pin-logo"><span>GT</span></div>
-    <div class="pin-badge">ACCESS CONTROL SYSTEM</div>
-    <div class="pin-title">Income Tracker</div>
-    <div class="pin-sub" id="pinSub">Masukkan <b>PIN 6 digit</b> untuk akses</div>
-    <div class="pin-tabs">
-      <div class="ptab on" id="ptab-masuk" id="ptab-masuk">MASUK</div>
-      <div class="ptab off" id="ptab-ganti">GANTI PIN</div>
-    </div>
-    <div class="pin-dots">
-      <div class="dot" id="d0"></div><div class="dot" id="d1"></div>
-      <div class="dot" id="d2"></div><div class="dot" id="d3"></div>
-      <div class="dot" id="d4"></div><div class="dot" id="d5"></div>
-    </div>
-    <div class="pin-err" id="pinErr"></div>
-    <div class="pkey-grid" id="pgrid">
-      <div class="pkey">1</div><div class="pkey">2</div><div class="pkey">3</div>
-      <div class="pkey">4</div><div class="pkey">5</div><div class="pkey">6</div>
-      <div class="pkey">7</div><div class="pkey">8</div><div class="pkey">9</div>
-      <div class="pkey ghost"></div><div class="pkey">0</div><div class="pkey del">⌫</div>
-    </div>
-    <div class="pin-copy" style="margin-top:20px;">© Gentara Anugrah • Grab Driver Income Tracker</div>
-    <input type="file" id="importFile" accept=".json" style="display:none"/>
-  </div>
-</div>
-
-<!-- BACKUP FAB (shown on PIN screen) -->
-<div class="fab-backup" id="fabBackup" title="Kelola Data Backup">
-  <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" style="position:relative;z-index:1;filter:drop-shadow(0 0 5px rgba(0,128,255,0.7))">
-    <defs>
-      <linearGradient id="bg1" x1="0" y1="0" x2="28" y2="28" gradientUnits="userSpaceOnUse">
-        <stop offset="0%" stop-color="#60b4ff"/><stop offset="100%" stop-color="#0064cc"/>
-      </linearGradient>
-      <linearGradient id="bg2" x1="4" y1="4" x2="24" y2="14" gradientUnits="userSpaceOnUse">
-        <stop offset="0%" stop-color="#60b4ff" stop-opacity="0.25"/><stop offset="100%" stop-color="#0080ff" stop-opacity="0.06"/>
-      </linearGradient>
-    </defs>
-    <!-- Database cylinder top -->
-    <ellipse cx="14" cy="8" rx="8" ry="3" fill="url(#bg2)" stroke="url(#bg1)" stroke-width="1.4"/>
-    <!-- Database body -->
-    <rect x="6" y="8" width="16" height="9" fill="url(#bg2)"/>
-    <line x1="6" y1="8" x2="6" y2="17" stroke="url(#bg1)" stroke-width="1.4"/>
-    <line x1="22" y1="8" x2="22" y2="17" stroke="url(#bg1)" stroke-width="1.4"/>
-    <!-- Database bottom ellipse -->
-    <ellipse cx="14" cy="17" rx="8" ry="3" fill="url(#bg2)" stroke="url(#bg1)" stroke-width="1.4"/>
-    <!-- Middle line detail -->
-    <path d="M6 12.5 Q14 15 22 12.5" stroke="url(#bg1)" stroke-width="0.8" stroke-opacity="0.5" fill="none"/>
-    <!-- Up arrow -->
-    <line x1="14" y1="22" x2="14" y2="26" stroke="url(#bg1)" stroke-width="1.5" stroke-linecap="round"/>
-    <polyline points="11,24 14,21 17,24" stroke="url(#bg1)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-  </svg>
-</div>
-
-<!-- BACKUP BOTTOM SHEET -->
-<div class="bs-ov" id="bsModal">
-  <div class="bs-box">
-    <div class="bs-handle"></div>
-    <div class="bs-title">💾 Kelola Data Backup</div>
-    <div class="bs-sub">Export untuk backup, Import untuk memulihkan data</div>
-    <!-- Export Button -->
-    <div class="bs-btn bs-btn-export" id="bsBtnExport">
-      <div class="bs-btn-icon bs-btn-icon-export">📤</div>
-      <div class="bs-btn-text">
-        <div class="bs-btn-label bs-btn-label-export">Export Backup</div>
-        <div class="bs-btn-desc">Simpan semua data ke file .json di HP</div>
-      </div>
-    </div>
-    <!-- Import Button -->
-    <div class="bs-btn bs-btn-import" id="bsBtnImport">
-      <div class="bs-btn-icon bs-btn-icon-import">📥</div>
-      <div class="bs-btn-text">
-        <div class="bs-btn-label bs-btn-label-import">Import Backup</div>
-        <div class="bs-btn-desc">Pulihkan data dari file backup .json</div>
-      </div>
-    </div>
-    <!-- Last backup info -->
-    <div class="bs-last-backup" id="bsLastInfo">
-      <div class="bs-last-dot" id="bsLastDot"></div>
-      <div class="bs-last-info" id="bsLastText"></div>
-    </div>
-  </div>
-</div>
-
-<!-- APP -->
-<div id="app">
-  <div class="ticker"><div class="ticker-t">🚗 GRAB DRIVER INCOME TRACKER &nbsp;•&nbsp; © Gentara Anugrah &nbsp;•&nbsp; 🚗 GRAB DRIVER INCOME TRACKER &nbsp;•&nbsp; © Gentara Anugrah &nbsp;•&nbsp; 🚗 GRAB DRIVER INCOME TRACKER &nbsp;•&nbsp; © Gentara Anugrah &nbsp;&nbsp;</div></div>
-  <div class="hdr">
-    <div class="hdr-top">
-      <div><div class="brand-lbl">Grab Driver</div><div class="brand-title">Income Tracker</div></div>
-      <div class="hdr-right">
-        <div class="hdr-clock"><div class="clock-d" id="clockD"></div><div class="clock-t" id="clockT"></div></div>
-        <div class="hdr-btns">
-          <div class="hdr-btn btn-theme" id="themeBtn">🌙 Dark</div>
-          <div class="hdr-btn btn-logout" id="logoutBtn">🚪 Keluar</div>
-        </div>
-      </div>
-    </div>
-    <div class="tabs">
-      <div class="tab tab-on" id="tab-today">Hari Ini</div>
-      <div class="tab tab-in" id="tab-week">Mingguan</div>
-      <div class="tab tab-in" id="tab-month">Bulanan</div>
-    </div>
-  </div>
-  <div class="content" id="content"></div>
-  <div class="fab" id="fabCalc">
-    <svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg" style="position:relative;z-index:1;filter:drop-shadow(0 0 5px rgba(0,200,100,0.6))">
-      <defs>
-        <linearGradient id="cg" x1="0" y1="0" x2="30" y2="30" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stop-color="#00f07a"/><stop offset="100%" stop-color="#00a855"/>
-        </linearGradient>
-        <linearGradient id="sg" x1="0" y1="0" x2="14" y2="8" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stop-color="#00f07a" stop-opacity="0.25"/><stop offset="100%" stop-color="#00c864" stop-opacity="0.08"/>
-        </linearGradient>
-      </defs>
-      <rect x="4" y="2" width="22" height="26" rx="4" fill="none" stroke="url(#cg)" stroke-width="1.5"/>
-      <rect x="7" y="5" width="16" height="7" rx="2" fill="url(#sg)" stroke="url(#cg)" stroke-width="0.8" stroke-opacity="0.6"/>
-      <text x="10" y="11" font-size="5.5" fill="url(#cg)" font-family="sans-serif" font-weight="700">Rp</text>
-      <rect x="19" y="7.5" width="2" height="1.5" rx="0.5" fill="url(#cg)" opacity="0.9"/>
-      <rect x="19" y="10" width="3.5" height="1.5" rx="0.5" fill="url(#cg)" opacity="0.6"/>
-      <rect x="7" y="15" width="4" height="3" rx="1" fill="url(#cg)" opacity="0.7"/>
-      <rect x="13" y="15" width="4" height="3" rx="1" fill="url(#cg)" opacity="0.5"/>
-      <rect x="19" y="15" width="4" height="3" rx="1" fill="url(#cg)" opacity="0.5"/>
-      <rect x="7" y="20" width="4" height="3" rx="1" fill="url(#cg)" opacity="0.5"/>
-      <rect x="13" y="20" width="4" height="3" rx="1" fill="url(#cg)" opacity="0.5"/>
-      <rect x="19" y="20" width="4" height="3" rx="1" fill="#00f07a" opacity="0.9"/>
-      <line x1="21" y1="21" x2="21" y2="23" stroke="#071a2e" stroke-width="1.2" stroke-linecap="round"/>
-      <line x1="20" y1="22" x2="22" y2="22" stroke="#071a2e" stroke-width="1.2" stroke-linecap="round"/>
-      <rect x="7" y="25" width="10" height="3" rx="1" fill="url(#cg)" opacity="0.4"/>
-      <rect x="19" y="25" width="4" height="3" rx="1" fill="url(#cg)" opacity="0.35"/>
-    </svg>
-  </div>
-  <div class="footer">© Gentara Anugrah All Rights Reserved &nbsp;•&nbsp; Grab Driver Income Tracker</div>
-</div>
-
-<!-- OFF MODAL -->
-<div class="modal-ov" id="offModal">
-  <div class="modal-box">
-    <div class="modal-title">🔴 Turn OFF</div>
-    <div class="modal-sub">Mau ngapain sekarang?</div>
-    <textarea class="modal-ta" id="offNote" rows="3" placeholder="cth: jemput anak, makan siang, istirahat..."></textarea>
-    <div class="modal-btns">
-      <div class="btn-cancel" id="btnCancelOff">Batal</div>
-      <div class="btn-off" id="btnConfirmOff">🔴 OFF Sekarang</div>
-    </div>
-  </div>
-</div>
-
-<!-- CALC MODAL -->
-<div class="modal-ov" id="calcModal">
-  <div class="modal-box">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-      <div class="modal-title">🧮 Kalkulator Tunai</div>
-      <div id="btnCloseCalc" style="background:none;border:none;color:#4a7a9b;font-size:20px;cursor:pointer;padding:4px 8px;">✕</div>
-    </div>
-    <div class="modal-sub">Hitung kembalian yang tidak diambil customer</div>
-    <div style="margin-bottom:10px;">
-      <div style="font-size:11px;color:#4a7a9b;letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Uang Diterima Customer</div>
-      <input class="calc-inp" type="number" id="calcTerima" placeholder="50000"/>
-    </div>
-    <div style="margin-bottom:4px;">
-      <div style="font-size:11px;color:#4a7a9b;letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Tagihan / Ongkir</div>
-      <input class="calc-inp" type="number" id="calcTagihan" placeholder="43000"/>
-    </div>
-    <div class="calc-result">
-      <div><div style="font-size:12px;color:#4a7a9b;">Tips Kembalian</div><div style="font-size:10px;color:#4a7a9b;margin-top:2px;" id="calcFormula">-</div></div>
-      <div class="calc-r-val zero" id="calcResult">Rp 0</div>
-    </div>
-    <div class="btn-tips" id="btnAddTips" style="opacity:0.3;cursor:not-allowed;">➕ Tambah ke Tips Hari Ini</div>
-    <div class="btn-reset" id="btnResetCalc">🔄 Hitung Ulang</div>
-    <div style="margin-top:12px;padding:10px;background:rgba(255,255,255,0.04);border-radius:10px;border:1px solid rgba(255,255,255,0.07);">
-      <div style="font-size:10px;color:#4a7a9b;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Total Tips Hari Ini</div>
-      <div style="font-size:18px;font-weight:800;color:#00c864;font-family:'Syne',sans-serif;" id="totalTipsDisp">Rp 0</div>
-    </div>
-  </div>
-</div>
-
-<script>
-// ============ CONSTANTS ============
-var TARGET_DAILY=150000,TARGET_WEEKLY=900000,TARGET_MONTHLY=3900000,BBM=20000,DEFAULT_PIN='700115';
-var DAYS=['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
-var MONTHS=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
-
-// ============ STATE ============
-var pinInput='',pinMode='masuk',pinNewTemp='';
-var storedPin=localStorage.getItem('g_pin')||DEFAULT_PIN;
-var isDark=localStorage.getItem('g_theme')!=='light';
-var currentTab='today';
-var isOn=false,currentOnTime=null,sessions=[],savedIncome=null,savedNote='',editingDay=null;
-var allDays=[];
-var todayTips=0;
-var calcVal=0;
-var clockInt=null;
-
-// ============ THEME ============
-function applyTheme(){
-  document.body.className=isDark?'':'light';
-  var btn=document.getElementById('themeBtn');
-  if(btn) btn.textContent=isDark?'🌙 Dark':'☀️ Light';
+.onoff-wrap { display: flex; flex-direction: column; align-items: center; margin-bottom: 18px; gap: 10px; }
+.onoff-btn {
+  width: 124px; height: 124px; border-radius: 50%; border: none; cursor: pointer;
+  font-weight: 900; text-transform: uppercase; font-family: 'Syne', sans-serif;
+  transition: all 0.3s; position: relative;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
 }
-applyTheme();
+.onoff-btn.on {
+  background: linear-gradient(145deg,#00d96e,#00a855);
+  color: #071a2e;
+  box-shadow: 0 0 50px rgba(0,200,100,0.4), 0 4px 20px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.25);
+}
+.onoff-btn.off {
+  background: var(--card-bg);
+  border: 2px solid var(--border);
+  color: var(--muted);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+}
+.onoff-btn.on::before {
+  content:''; position:absolute; inset:-14px; border-radius:50%;
+  background: radial-gradient(circle,rgba(0,200,100,0.2) 0%,transparent 70%);
+  animation: glow-pulse 2s infinite;
+}
+.onoff-icon { font-size: 26px; line-height: 1; }
+.onoff-label { font-size: 13px; }
+.onoff-since { text-align: center; }
+.since-label { font-size: 10px; color: var(--green); letter-spacing: 2px; text-transform: uppercase; }
+.since-time { font-size: 16px; font-weight: 700; color: var(--green); }
+.timer-display { font-size: 36px; font-weight: 900; letter-spacing: 3px; font-variant-numeric: tabular-nums; font-family: 'Syne', sans-serif; }
 
-// ============ HELPERS ============
-function fRp(v){return 'Rp '+Math.round(v).toLocaleString('id-ID');}
-function fTime(d){return d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',second:'2-digit'});}
-function fShort(ts){return new Date(ts).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});}
-function fDur(ms){var s=Math.floor(ms/1000),h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sc=s%60;return p2(h)+':'+p2(m)+':'+p2(sc);}
-function p2(n){return String(n).padStart(2,'0');}
-function pct(v,t){return Math.min(100,Math.round(v/t*100));}
-function todayKey(){return new Date().toDateString();}
-function getDay(k){return allDays.find(function(d){return d.date===k;})||{date:k,income:null,sessions:[],note:'',libur:false};}
-function upsertDay(days,k,patch){
-  var i=days.findIndex(function(d){return d.date===k;});
-  if(i>=0){var c=[].concat(days);c[i]=Object.assign({},c[i],patch);return c;}
-  return days.concat([Object.assign({date:k,income:null,sessions:[],note:'',libur:false},patch)]);
+/* Sessions */
+.session-list { display: flex; flex-direction: column; gap: 8px; }
+.session-item { background: var(--session-bg); border: 1px solid var(--border); border-radius: 12px; padding: 11px 13px; display: flex; justify-content: space-between; align-items: center; transition: background 0.3s; }
+.session-item.live { background: rgba(0,200,100,0.08); border-color: rgba(0,200,100,0.3); }
+.session-time { font-size: 13px; font-weight: 700; }
+.session-time.live { color: var(--green); }
+.session-note { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.session-note.live { color: var(--green); }
+.session-dur { font-size: 14px; font-weight: 800; color: var(--green); font-variant-numeric: tabular-nums; }
+
+/* Rate grid */
+.rate-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.rate-card { background: var(--rate-bg); border: 1px solid var(--rate-border); border-radius: 12px; padding: 11px 7px; text-align: center; }
+.rate-label { font-size: 10px; color: var(--rate-label); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 5px; }
+.rate-val { font-weight: 800; color: var(--rate-val); font-variant-numeric: tabular-nums; line-height: 1.2; }
+
+/* Income input */
+.income-input-wrap { display: flex; gap: 8px; margin-top: 10px; }
+.income-input {
+  flex:1; background: var(--input-bg); border: 1px solid rgba(255,200,0,0.35);
+  border-radius: 10px; padding: 10px 13px; color: var(--gold); font-size: 16px;
+  font-weight: 700; outline: none; font-family: 'DM Sans', sans-serif;
 }
-function totalMs(){
-  var c=sessions.reduce(function(a,s){return a+(s.duration||0);},0);
-  var l=isOn&&currentOnTime?(Date.now()-currentOnTime):0;
-  return c+l;
+.light .income-input { color: #a07000; border-color: rgba(212,160,0,0.5); }
+.income-input::placeholder { color: rgba(255,200,0,0.25); }
+.btn { border: none; border-radius: 10px; padding: 10px 15px; font-weight: 800; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 14px; transition: opacity 0.15s; }
+.btn:active { opacity: 0.75; }
+.btn-gold { background: var(--gold); color: #071a2e; }
+.btn-ghost { background: var(--card-bg); color: var(--muted); border: 1px solid var(--border); }
+.btn-green { background: var(--green); color: #fff; }
+.btn-outline-gold { background: rgba(255,200,0,0.1); border: 1px solid rgba(255,200,0,0.3); color: var(--gold); border-radius: 8px; padding: 6px 14px; font-size: 12px; margin-top: 10px; cursor: pointer; font-weight: 700; font-family: 'DM Sans', sans-serif; }
+.btn-primary { background: linear-gradient(135deg,#ffc800,#ff9500); color: #071a2e; border-radius: 12px; padding: 11px 20px; font-size: 14px; }
+
+/* BBM card */
+.bbm-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; }
+.bbm-label { font-size: 12px; color: var(--muted); }
+.bbm-val { font-size: 13px; font-weight: 700; }
+.bbm-divider { height: 1px; background: var(--border); margin: 8px 0; }
+
+/* Notes */
+.notes-input {
+  width: 100%; background: var(--input-bg); border: 1px solid var(--border);
+  border-radius: 10px; padding: 10px 13px; color: var(--text); font-size: 13px;
+  outline: none; font-family: 'DM Sans', sans-serif; resize: none; margin-top: 8px;
 }
-function canEditDay(k){
-  var mb=new Date();mb.setDate(mb.getDate()-2);mb.setHours(0,0,0,0);
-  return new Date(k)>=mb&&new Date(k)<=new Date();
+.notes-input::placeholder { color: var(--muted); }
+
+/* Day items */
+.day-item { background: var(--day-bg); border: 1px solid var(--border); border-radius: 12px; padding: 11px 13px; margin-bottom: 8px; transition: background 0.3s; }
+.day-item.today { background: rgba(0,200,100,0.09); border-color: rgba(0,200,100,0.28); }
+.day-item.libur { background: rgba(255,60,60,0.06); border-color: rgba(255,60,60,0.2); }
+.day-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.day-name { font-size: 13px; font-weight: 700; }
+.day-name.today { color: var(--green); }
+.day-badge { font-size: 9px; color: var(--green); font-weight: 700; letter-spacing: 1px; background: rgba(0,200,100,0.15); padding: 2px 6px; border-radius: 4px; margin-left: 6px; }
+.day-badge.libur-badge { color: #ff6060; background: rgba(255,60,60,0.12); }
+.day-income { font-size: 15px; font-weight: 800; }
+.day-bar { height: 4px; border-radius: 2px; background: rgba(128,128,128,0.15); overflow: hidden; }
+.day-bar-fill { height: 100%; border-radius: 2px; transition: width 0.5s; }
+
+/* Stats grid */
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.stat-card { background: var(--stat-bg); border: 1px solid var(--border); border-radius: 12px; padding: 13px; transition: background 0.3s; }
+.stat-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+.stat-val { font-size: 15px; font-weight: 800; font-variant-numeric: tabular-nums; }
+
+/* Section title */
+.section-title { font-size: 10px; color: var(--muted); letter-spacing: 2.5px; text-transform: uppercase; margin-bottom: 10px; font-family: 'Syne', sans-serif; }
+
+/* Libur toggle */
+.libur-btn {
+  width: 100%; padding: 10px; border-radius: 10px; border: 1px dashed rgba(255,60,60,0.4);
+  background: transparent; color: #ff6060; font-size: 12px; font-weight: 700;
+  cursor: pointer; font-family: 'DM Sans', sans-serif; margin-top: 4px; transition: all 0.2s;
+}
+.libur-btn.active { background: rgba(255,60,60,0.12); border-style: solid; }
+.libur-btn:active { opacity: 0.7; }
+
+/* Modal */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 150;
+  background: rgba(0,0,0,0.6); backdrop-filter: blur(10px);
+  display: flex; align-items: flex-end; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity 0.25s;
+}
+.modal-overlay.show { opacity: 1; pointer-events: all; }
+.modal-box {
+  background: var(--modal-bg); border: 1px solid var(--border);
+  border-radius: 22px 22px 0 0; padding: 22px 18px 40px;
+  width: 100%; max-width: 480px;
+  transform: translateY(100%); transition: transform 0.3s ease;
+}
+.modal-overlay.show .modal-box { transform: translateY(0); }
+.modal-title { font-size: 16px; font-weight: 800; margin-bottom: 4px; font-family: 'Syne', sans-serif; }
+.modal-sub { font-size: 12px; color: var(--muted); margin-bottom: 14px; }
+.modal-textarea {
+  width: 100%; background: var(--input-bg); border: 1px solid rgba(0,200,100,0.25);
+  border-radius: 12px; padding: 12px 13px; color: var(--text); font-size: 14px;
+  resize: none; outline: none; margin-bottom: 13px; font-family: 'DM Sans', sans-serif; line-height: 1.5;
+}
+.modal-textarea::placeholder { color: var(--muted); opacity: 0.6; }
+.modal-btns { display: flex; gap: 10px; }
+.btn-cancel { flex:1; padding:13px; background:var(--card-bg); border:1px solid var(--border); border-radius:12px; color:var(--muted); font-weight:700; cursor:pointer; font-size:13px; font-family:'DM Sans',sans-serif; }
+.btn-off { flex:2; padding:13px; background:linear-gradient(135deg,#ff4444,#cc1111); border:none; border-radius:12px; color:#fff; font-weight:800; cursor:pointer; font-size:13px; font-family:'DM Sans',sans-serif; }
+
+/* Footer */
+.footer {
+  position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+  width: 100%; max-width: 480px; z-index: 50;
+  background: var(--header-bg); backdrop-filter: blur(16px);
+  border-top: 1px solid var(--border);
+  text-align: center; padding: 8px 16px;
+  font-size: 10px; color: var(--muted); letter-spacing: 1px;
+  font-family: 'Syne', sans-serif;
 }
 
-// ============ STORAGE ============
-function loadData(){
-  try{
-    var d=JSON.parse(localStorage.getItem('g_data')||'{}');
-    allDays=d.allDays||[];
-    var td=allDays.find(function(x){return x.date===todayKey();});
-    if(td){sessions=td.sessions||[];savedIncome=td.income||null;savedNote=td.note||'';}
-    todayTips=parseInt(localStorage.getItem('g_tips_'+todayKey())||'0',10);
-  }catch(e){}
-}
-function saveData(){
-  try{
-    var u=upsertDay(allDays,todayKey(),{sessions:sessions,income:savedIncome,note:savedNote});
-    allDays=u;
-    localStorage.setItem('g_data',JSON.stringify({allDays:allDays}));
-  }catch(e){}
-}
+/* Empty */
+.empty { text-align: center; color: var(--muted); opacity: 0.4; font-size: 13px; padding: 28px 0; }
 
-// ============ TOAST ============
-function showToast(msg,warn){
-  var old=document.querySelector('.toast');if(old)old.remove();
-  var t=document.createElement('div');t.className='toast';
-  if(warn){t.style.background='#ff9500';t.style.boxShadow='0 4px 20px rgba(255,149,0,0.4)';}
-  t.innerHTML=msg;t.style.cssText+='white-space:normal;text-align:center;max-width:280px;line-height:1.5;';
-  document.body.appendChild(t);
-  setTimeout(function(){if(t.parentNode)t.remove();},warn?5000:2500);
-}
+@keyframes glow-pulse { 0%,100%{transform:scale(1);opacity:.6} 50%{transform:scale(1.12);opacity:1} }
+@keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+.fade-in { animation: fadeIn 0.3s ease forwards; }
 
-// ============ PIN LOGIC ============
-function updateDots(){
-  for(var i=0;i<6;i++){
-    var d=document.getElementById('d'+i);
-    if(d)d.className='dot'+(i<pinInput.length?' filled':'');
-  }
-}
-function updatePinSub(){
-  var el=document.getElementById('pinSub');if(!el)return;
-  if(pinMode==='masuk')el.innerHTML='Masukkan <b>PIN 6 digit</b> untuk akses';
-  else if(pinMode==='ganti_old')el.innerHTML='Masukkan <b>PIN lama</b> dulu';
-  else if(pinMode==='ganti_new')el.innerHTML='Masukkan <b>PIN baru</b> 6 digit';
-  else if(pinMode==='ganti_confirm')el.innerHTML='<b>Ulangi PIN baru</b> untuk konfirmasi';
-}
-function clearErr(){var e=document.getElementById('pinErr');if(e)e.textContent='';}
-function showErr(m){var e=document.getElementById('pinErr');if(e)e.textContent=m;}
-function setPinMode(mode){
-  pinMode=mode==='ganti'?'ganti_old':'masuk';
-  pinInput='';pinNewTemp='';
-  var tM=document.getElementById('ptab-masuk'),tG=document.getElementById('ptab-ganti');
-  if(tM){tM.className='ptab '+(mode==='masuk'?'on':'off');}
-  if(tG){tG.className='ptab '+(mode==='ganti'?'on':'off');}
-  updatePinSub();updateDots();clearErr();
-}
-function pinPress(k){
-  if(k==='del'){pinInput=pinInput.slice(0,-1);updateDots();clearErr();return;}
-  if(pinInput.length>=6)return;
-  pinInput+=k;updateDots();clearErr();
-  if(pinInput.length===6)setTimeout(checkPin,150);
-}
-function checkPin(){
-  if(pinMode==='masuk'){
-    if(pinInput===storedPin){enterApp();}
-    else{showErr('PIN salah, coba lagi');pinInput='';updateDots();}
-  } else if(pinMode==='ganti_old'){
-    if(pinInput===storedPin){pinMode='ganti_new';pinInput='';updateDots();updatePinSub();clearErr();}
-    else{showErr('PIN lama salah');pinInput='';updateDots();}
-  } else if(pinMode==='ganti_new'){
-    pinNewTemp=pinInput;pinMode='ganti_confirm';pinInput='';updateDots();updatePinSub();
-  } else if(pinMode==='ganti_confirm'){
-    if(pinInput===pinNewTemp){
-      storedPin=pinInput;localStorage.setItem('g_pin',storedPin);
-      showErr('✅ PIN berhasil diganti!');
-      setTimeout(function(){setPinMode('masuk');},1200);
-    } else {showErr('PIN tidak cocok, ulangi');pinMode='ganti_new';pinNewTemp='';pinInput='';updateDots();updatePinSub();}
-  }
-}
-function enterApp(){
-  document.getElementById('pin-screen').style.display='none';
-  var app=document.getElementById('app');app.style.display='flex';
-  var fb=document.getElementById('fabBackup');if(fb)fb.style.display='none';
-  render();startClock();checkBackupReminder();
-}
-function logout(){
-  isOn=false;currentOnTime=null;sessions=[];savedIncome=null;savedNote='';editingDay=null;
-  if(clockInt){clearInterval(clockInt);clockInt=null;}
-  pinInput='';pinNewTemp='';setPinMode('masuk');
-  document.getElementById('app').style.display='none';
-  document.getElementById('pin-screen').style.display='flex';
-  var fb=document.getElementById('fabBackup');if(fb)fb.style.display='flex';
-}
 
-// ============ CLOCK ============
-function startClock(){
-  if(clockInt)clearInterval(clockInt);
-  clockInt=setInterval(tickClock,1000);tickClock();
-}
-function tickClock(){
-  var now=new Date();
-  var dEl=document.getElementById('clockD'),tEl=document.getElementById('clockT');
-  if(dEl)dEl.textContent=DAYS[now.getDay()]+', '+now.getDate()+' '+MONTHS[now.getMonth()];
-  if(tEl)tEl.textContent=fTime(now);
-  var ms=totalMs();
-  var lt=document.getElementById('liveTimer');if(lt)lt.textContent=fDur(ms);
-  var ld=document.getElementById('liveDur');if(ld&&isOn&&currentOnTime)ld.textContent=fDur(Date.now()-currentOnTime);
-  if(savedIncome&&ms>0){
-    var rH=document.getElementById('rH'),rM=document.getElementById('rM'),rS=document.getElementById('rS');
-    if(rH)rH.textContent=fRp((savedIncome+todayTips)/(ms/3600000));
-    if(rM)rM.textContent=fRp((savedIncome+todayTips)/(ms/60000));
-    if(rS)rS.textContent=fRp((savedIncome+todayTips)/(ms/1000));
-  }
-}
-
-// ============ TABS ============
-function switchTab(t){
-  currentTab=t;
-  ['today','week','month'].forEach(function(id){
-    var el=document.getElementById('tab-'+id);
-    if(el)el.className='tab '+(id===t?'tab-on':'tab-in');
-  });
-  render();
-}
-
-// ============ ACTIONS ============
-function toggleOnOff(){
-  if(!isOn){isOn=true;currentOnTime=Date.now();render();}
-  else{document.getElementById('offModal').classList.add('show');document.getElementById('offNote').value='';}
-}
-function closeOff(){document.getElementById('offModal').classList.remove('show');}
-function confirmOff(){
-  var note=document.getElementById('offNote').value.trim()||'Selesai';
-  var off=Date.now();
-  sessions.push({onTime:currentOnTime,offTime:off,note:note,duration:off-currentOnTime});
-  isOn=false;currentOnTime=null;closeOff();saveData();render();
-}
-function openIncome(){document.getElementById('incomeInputShown')||(render(),setTimeout(function(){var el=document.getElementById('incomeInp');if(el)el.focus();},100));}
-function saveIncome(){
-  var el=document.getElementById('incomeInp');if(!el)return;
-  var v=parseInt(el.value.replace(/\D/g,''),10);
-  if(!isNaN(v)&&v>0){savedIncome=v;saveData();render();}
-}
-function saveNote(){var el=document.getElementById('noteInp');if(el){savedNote=el.value;saveData();}}
-
-// ============ LIBUR ============
-function toggleLibur(k){
-  var d=getDay(k);
-  allDays=upsertDay(allDays,k,Object.assign({},d,{libur:!d.libur}));
-  localStorage.setItem('g_data',JSON.stringify({allDays:allDays}));
-  render();
-}
-
-// ============ PAST INCOME ============
-function openPastIncome(k){editingDay=k;render();setTimeout(function(){var el=document.getElementById('pastInp_'+k);if(el)el.focus();},100);}
-function savePastIncome(k){
-  var el=document.getElementById('pastInp_'+k);if(!el)return;
-  var v=parseInt(el.value.replace(/\D/g,''),10);
-  if(!isNaN(v)&&v>0){
-    var d=getDay(k);
-    allDays=upsertDay(allDays,k,Object.assign({},d,{income:v}));
-    localStorage.setItem('g_data',JSON.stringify({allDays:allDays}));
-    editingDay=null;render();showToast('✅ Penghasilan disimpan!');
-  }
-}
-function cancelPastIncome(){editingDay=null;render();}
-
-// ============ CALCULATOR ============
-function openCalc(){
-  document.getElementById('totalTipsDisp').textContent=fRp(todayTips);
-  document.getElementById('calcModal').classList.add('show');
-}
-function closeCalc(){document.getElementById('calcModal').classList.remove('show');}
-function calcChange(){
-  var t=parseInt(document.getElementById('calcTerima').value||'0',10);
-  var g=parseInt(document.getElementById('calcTagihan').value||'0',10);
-  calcVal=t-g;
-  var rv=document.getElementById('calcResult'),fm=document.getElementById('calcFormula'),bt=document.getElementById('btnAddTips');
-  if(t>0&&g>0)fm.textContent=fRp(t)+' - '+fRp(g);else fm.textContent='-';
-  if(calcVal>0){rv.textContent=fRp(calcVal);rv.className='calc-r-val';bt.style.opacity='1';bt.style.cursor='pointer';}
-  else{rv.textContent=calcVal<0?'⚠️ Kurang':'Rp 0';rv.className='calc-r-val zero';bt.style.opacity='0.3';bt.style.cursor='not-allowed';}
-}
-function addTips(){
-  if(calcVal<=0)return;
-  todayTips+=calcVal;
-  localStorage.setItem('g_tips_'+todayKey(),todayTips);
-  showToast('✅ '+fRp(calcVal)+' ditambahkan ke tips!');
-  document.getElementById('totalTipsDisp').textContent=fRp(todayTips);
-  document.getElementById('calcTerima').value='';
-  document.getElementById('calcTagihan').value='';
-  document.getElementById('calcResult').textContent='Rp 0';
-  document.getElementById('calcResult').className='calc-r-val zero';
-  document.getElementById('calcFormula').textContent='-';
-  document.getElementById('btnAddTips').style.opacity='0.3';
-  document.getElementById('btnAddTips').style.cursor='not-allowed';
-  calcVal=0;render();
-}
-
-// ============ EXPORT/IMPORT ============
-function exportData(){
-  try{
-    var tips={};
-    for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(k&&k.startsWith('g_tips_'))tips[k]=localStorage.getItem(k);}
-    var data={version:3,exportDate:new Date().toISOString(),allDays:allDays,tips:tips,pin:storedPin,theme:isDark?'dark':'light'};
-    var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
-    var url=URL.createObjectURL(blob);
-    var a=document.createElement('a');
-    var ds=new Date().toLocaleDateString('id-ID').replace(/\//g,'-');
-    a.href=url;a.download='grab-backup-'+ds+'.json';a.click();URL.revokeObjectURL(url);
-    localStorage.setItem('g_last_export',new Date().toDateString());
-    showToast('✅ Data berhasil di-export!');
-  }catch(e){alert('Gagal export: '+e.message);}
-}
-function importData(e){
-  var file=e.target.files[0];if(!file)return;
-  var reader=new FileReader();
-  reader.onload=function(ev){
-    try{
-      var data=JSON.parse(ev.target.result);
-      if(!data.allDays){alert('File tidak valid.');return;}
-      localStorage.setItem('g_data',JSON.stringify({allDays:data.allDays}));
-      if(data.tips)Object.keys(data.tips).forEach(function(k){localStorage.setItem(k,data.tips[k]);});
-      if(data.pin){localStorage.setItem('g_pin',data.pin);storedPin=data.pin;}
-      if(data.theme){localStorage.setItem('g_theme',data.theme);isDark=data.theme!=='light';applyTheme();}
-      loadData();
-      var dt=data.exportDate?new Date(data.exportDate).toLocaleDateString('id-ID'):'-';
-      showToast('✅ Import berhasil!<br/>'+data.allDays.length+' hari dipulihkan<br/><small>Backup: '+dt+'</small>');
-    }catch(err){alert('Gagal import: File rusak.');}
-    e.target.value='';
-  };
-  reader.readAsText(file);
-}
-function checkBackupReminder(){
-  var last=localStorage.getItem('g_last_export');if(!last)return;
-  var diff=Math.floor((Date.now()-new Date(last))/(86400000));
-  if(diff>=7)setTimeout(function(){showToast('⚠️ Sudah '+diff+' hari belum backup!<br/><small>Tap Export untuk backup sekarang</small>',true);},2000);
-}
-
-// ============ DATA GETTERS ============
-function getWeekDays(){
-  var days=[];
-  for(var i=6;i>=0;i--){var d=new Date();d.setDate(d.getDate()-i);var k=d.toDateString();var dd=getDay(k);days.push(Object.assign({},dd,{date:d,key:k}));}
-  return days;
-}
-function getMonthDays(){
-  var now=new Date();
-  return allDays.filter(function(d){var dd=new Date(d.date);return dd.getMonth()===now.getMonth()&&dd.getFullYear()===now.getFullYear();});
-}
-
-// ============ RENDER ============
-function render(){
-  var el=document.getElementById('content');if(!el)return;
-  if(currentTab==='today')el.innerHTML=renderToday();
-  else if(currentTab==='week')el.innerHTML=renderWeek();
-  else el.innerHTML=renderMonth();
-}
-
-function renderToday(){
-  var ms=totalMs(),liveMs=isOn&&currentOnTime?(Date.now()-currentOnTime):0;
-  var income=(savedIncome||0)+todayTips,dp=pct(income,TARGET_DAILY);
-  var bersih=income-BBM;
-  var perH=ms>0&&savedIncome?fRp(income/(ms/3600000)):'-';
-  var perM=ms>0&&savedIncome?fRp(income/(ms/60000)):'-';
-  var perS=ms>0&&savedIncome?fRp(income/(ms/1000)):'-';
-  var td=getDay(todayKey()),isLibur=td.libur||false;
-  var h='<div>';
-
-  // ON/OFF
-  h+='<div class="onoff-wrap">';
-  h+='<div class="onoff-btn '+(isOn?'btn-on':'btn-off')+'" id="onoffBtn"><span class="on-icon">'+(isOn?'🟢':'⭕')+'</span><span class="on-lbl">'+(isOn?'ON':'OFF')+'</span></div>';
-  if(isOn&&currentOnTime)h+='<div class="since"><div class="since-lbl">Mulai Sejak</div><div class="since-t">'+fShort(currentOnTime)+'</div></div>';
-  if(!isOn&&sessions.length===0)h+='<div style="font-size:12px;color:#4a7a9b;">Tap untuk mulai kerja</div>';
-  h+='</div>';
-
-  // Timer
-  h+='<div class="card card-g" style="text-align:center;"><div class="card-lbl lbl-g">Total Waktu Efektif</div>';
-  h+='<div class="timer n-g" id="liveTimer">'+fDur(ms)+'</div></div>';
-
-  // Sessions
-  if(sessions.length>0||isOn){
-    h+='<div style="margin-bottom:12px;"><div class="sec-title">Log Sesi Hari Ini</div>';
-    sessions.forEach(function(s){
-      h+='<div class="sess-item"><div><div class="sess-t">'+fShort(s.onTime)+' → '+fShort(s.offTime)+'</div><div class="sess-n">OFF: '+s.note+'</div></div><div class="sess-d">'+fDur(s.duration)+'</div></div>';
-    });
-    if(isOn&&currentOnTime){
-      h+='<div class="sess-item sess-live"><div><div class="sess-t" style="color:#00e87a;">'+fShort(currentOnTime)+' → sekarang</div><div class="sess-n" style="color:#00c864;">🟢 Sedang berjalan</div></div><div class="sess-d" id="liveDur">'+fDur(liveMs)+'</div></div>';
-    }
-    h+='</div>';
-  }
-
-  // Income
-  h+='<div class="card card-y"><div class="card-lbl lbl-y">Penghasilan Hari Ini</div>';
-  if(savedIncome){
-    if(todayTips>0){
-      h+='<div class="inc-row"><span style="color:#4a7a9b;">Income Grab</span><span style="font-weight:700;">'+fRp(savedIncome)+'</span></div>';
-      h+='<div class="inc-row"><span style="color:#00c864;">+ Tips Tunai</span><span style="font-weight:700;color:#00c864;">+ '+fRp(todayTips)+'</span></div>';
-      h+='<div class="inc-total"><span style="font-weight:800;">Total</span><span class="big-n n-y" style="font-size:24px;">'+fRp(income)+'</span></div>';
-    } else {
-      h+='<div class="big-n n-y">'+fRp(income)+'</div>';
-    }
-    h+='<div class="prog"><div class="prog-meta"><span>Target: '+fRp(TARGET_DAILY)+'</span><span style="font-weight:700;color:'+(dp>=100?'#00c864':'#ffc800')+';">'+dp+'%</span></div>';
-    h+='<div class="prog-track"><div class="prog-fill '+(dp>=100?'fill-g':'fill-y')+'" style="width:'+dp+'%;"></div></div>';
-    h+='<div class="prog-note '+(dp>=100?'prog-ok':'')+'">'+(dp>=100?'🎉 Target tercapai!':'Kurang '+fRp(TARGET_DAILY-income))+'</div></div>';
-    h+='<div class="btn-gy-sm" id="btnEditIncome">✏️ Edit Penghasilan</div>';
-  } else {
-    if(todayTips>0)h+='<div style="margin-bottom:8px;"><div style="font-size:11px;color:#4a7a9b;margin-bottom:4px;">Tips terkumpul:</div><div style="font-size:20px;font-weight:800;color:#00c864;">'+fRp(todayTips)+'</div></div>';
-    h+='<div style="font-size:13px;color:#4a7a9b;margin-bottom:10px;">Belum ada input income Grab</div>';
-    h+='<div class="btn btn-primary" id="btnOpenIncome">+ Input Penghasilan</div>';
-  }
-  // Income input form
-  h+='<div id="incomeInputShown" style="display:none;margin-top:10px;">';
-  h+='<div style="font-size:11px;color:#ffc800;margin-bottom:5px;">Income bersih dari Grab (Rp):</div>';
-  h+='<div class="inp-wrap"><input class="inp" type="number" id="incomeInp" placeholder="150000"/>';
-  h+='<div class="btn btn-y" id="btnSaveIncome">Simpan</div>';
-  h+='<div class="btn btn-gh" id="btnCancelIncome">✕</div></div></div>';
-  h+='</div>';
-
-  // BBM
-  if(savedIncome){
-    h+='<div class="card card-r"><div class="card-lbl lbl-r">⛽ Kalkulator BBM</div>';
-    h+='<div class="bbm-row"><span style="color:#4a7a9b;">Penghasilan</span><span style="font-weight:700;">'+fRp(income)+'</span></div>';
-    h+='<div class="bbm-row"><span style="color:#4a7a9b;">Biaya BBM</span><span style="font-weight:700;color:#ff6060;">- '+fRp(BBM)+'</span></div>';
-    h+='<div class="bbm-div"></div>';
-    h+='<div class="bbm-row"><span style="font-weight:800;">Bersih setelah BBM</span><span style="font-weight:800;font-size:16px;color:#00c864;">'+fRp(bersih)+'</span></div></div>';
-  }
-
-  // Earning Rate
-  if(savedIncome&&ms>0){
-    h+='<div style="margin-bottom:12px;"><div class="sec-title">Earning Rate</div>';
-    h+='<div class="rate-grid"><div class="rate-card"><div class="rate-lbl">Per Jam</div><div class="rate-val" style="font-size:13px;" id="rH">'+perH+'</div></div>';
-    h+='<div class="rate-card"><div class="rate-lbl">Per Menit</div><div class="rate-val" style="font-size:12px;" id="rM">'+perM+'</div></div>';
-    h+='<div class="rate-card"><div class="rate-lbl">Per Detik</div><div class="rate-val" style="font-size:11px;" id="rS">'+perS+'</div></div></div></div>';
-  }
-
-  // Notes
-  h+='<div class="card"><div class="card-lbl lbl-m">📝 Catatan Hari Ini</div>';
-  h+='<textarea class="notes-inp" id="noteInp" rows="2" placeholder="Area, kondisi, cuaca...">'+savedNote+'</textarea></div>';
-
-  // Libur
-  h+='<div style="margin-bottom:12px;"><div class="libur-btn '+(isLibur?'libur-on':'')+'" id="btnLiburToday">'+(isLibur?'✅ Hari Ini Libur — Batalkan':'🏖️ Tandai Hari Ini sebagai Libur')+'</div></div>';
-  h+='</div>';
-  return h;
-}
-
-function renderWeek(){
-  var weekDays=getWeekDays(),tKey=todayKey();
-  var wTotal=weekDays.filter(function(d){return !d.libur;}).reduce(function(a,d){return a+(d.income||0);},0);
-  var wp=pct(wTotal,TARGET_WEEKLY);
-  var h='<div>';
-  h+='<div class="card card-g"><div class="card-lbl lbl-g">Total Minggu Ini</div><div class="big-n n-g">'+fRp(wTotal)+'</div>';
-  h+='<div class="prog"><div class="prog-meta"><span>Target: '+fRp(TARGET_WEEKLY)+'</span><span style="font-weight:700;color:'+(wp>=100?'#00c864':'#ffc800')+';">'+wp+'%</span></div>';
-  h+='<div class="prog-track"><div class="prog-fill fill-g" style="width:'+wp+'%;"></div></div>';
-  h+='<div class="prog-note '+(wp>=100?'prog-ok':'')+'">'+(wp>=100?'🎉 Target minggu tercapai!':'Kurang '+fRp(TARGET_WEEKLY-wTotal))+'</div></div></div>';
-  h+='<div class="sec-title">Rincian Per Hari</div>';
-  weekDays.forEach(function(d){
-    var isToday=d.key===tKey,p=pct(d.income||0,TARGET_DAILY),canEdit=canEditDay(d.key);
-    var isEditing=editingDay===d.key;
-    var color=p>=100?'#00e87a':'#ffd700';
-    h+='<div class="day-item'+(isToday?' day-today':'')+(d.libur?' day-libur':'')+'">';
-    h+='<div class="day-row"><div class="day-name">'+DAYS[d.date.getDay()]+', '+d.date.getDate()+' '+MONTHS[d.date.getMonth()];
-    if(isToday)h+='<span class="day-badge badge-today">HARI INI</span>';
-    if(d.libur)h+='<span class="day-badge badge-libur">LIBUR</span>';
-    h+='</div><div style="font-size:15px;font-weight:800;color:'+(d.libur?'#4a7a9b':(d.income>0?color:'#2a4a6a'))+'">'+(d.libur?'Libur':(d.income>0?fRp(d.income):'-'))+'</div></div>';
-    if(d.income>0&&!d.libur)h+='<div class="day-bar"><div class="day-bar-fill" style="width:'+p+'%;background:'+(p>=100?'#00c864':'linear-gradient(90deg,#ffc800,#ff9500)')+'"></div></div>';
-    if(isEditing){
-      h+='<div class="past-inp-wrap"><div style="font-size:11px;color:#ffc800;margin-bottom:5px;">Penghasilan bersih (Rp):</div>';
-      h+='<input class="past-inp" type="number" id="pastInp_'+d.key+'" placeholder="150000"/>';
-      h+='<div class="past-btns"><div class="btn btn-y" id="btnSavePast_'+d.key+'">Simpan</div><div class="btn btn-gh" id="btnCancelPast">✕</div></div></div>';
-    } else if(canEdit&&!d.libur){
-      h+='<div class="btn-gy-sm" style="margin-top:7px;display:block;" id="btnPastIncome_'+d.key+'">'+(d.income>0?'✏️ Edit Penghasilan':'💰 Input Penghasilan')+'</div>';
-    }
-    if(canEditDay(d.key)){
-      h+='<div class="libur-btn '+(d.libur?'libur-on':'')+'" style="margin-top:6px;font-size:11px;" id="btnLibur_'+d.key+'">'+(d.libur?'✅ Libur — Batalkan':'🏖️ Tandai Libur')+'</div>';
-    }
-    h+='</div>';
-  });
-  h+='</div>';return h;
-}
-
-function renderMonth(){
-  var now=new Date(),mDays=getMonthDays();
-  var wDays=mDays.filter(function(d){return d.income>0&&!d.libur;});
-  var mTotal=wDays.reduce(function(a,d){return a+(d.income||0);},0);
-  var mp=pct(mTotal,TARGET_MONTHLY),avg=wDays.length>0?mTotal/wDays.length:0;
-  var est=wDays.length>0?avg*26:0,totalBBM=wDays.length*BBM,bersih=mTotal-totalBBM;
-  var h='<div>';
-  h+='<div class="card card-p"><div class="card-lbl lbl-p">Total '+MONTHS[now.getMonth()]+' '+now.getFullYear()+'</div><div class="big-n n-p">'+fRp(mTotal)+'</div>';
-  h+='<div class="prog"><div class="prog-meta"><span>Target: '+fRp(TARGET_MONTHLY)+'</span><span style="font-weight:700;color:'+(mp>=100?'#00c864':'#a67fff')+';">'+mp+'%</span></div>';
-  h+='<div class="prog-track"><div class="prog-fill fill-p" style="width:'+mp+'%;"></div></div>';
-  h+='<div style="display:flex;justify-content:space-between;font-size:11px;color:#4a7a9b;margin-top:4px;"><span>Hari kerja: '+wDays.length+' / 26</span>'+(mp<100?'<span>Kurang '+fRp(TARGET_MONTHLY-mTotal)+'</span>':'')+'</div>';
-  if(mp>=100)h+='<div class="prog-note prog-ok">🎉 Target bulan tercapai!</div>';
-  h+='</div></div>';
-  h+='<div class="stats-grid">';
-  h+='<div class="stat-card"><div class="stat-lbl">Rata-rata / Hari</div><div class="stat-val" style="color:#ffd700;">'+fRp(avg)+'</div></div>';
-  h+='<div class="stat-card"><div class="stat-lbl">Estimasi Akhir Bulan</div><div class="stat-val" style="color:#c4a0ff;">'+fRp(est)+'</div></div>';
-  h+='<div class="stat-card"><div class="stat-lbl">Total BBM Bulan Ini</div><div class="stat-val" style="color:#ff6060;">- '+fRp(totalBBM)+'</div></div>';
-  h+='<div class="stat-card"><div class="stat-lbl">Bersih Setelah BBM</div><div class="stat-val" style="color:#00c864;">'+fRp(bersih)+'</div></div>';
-  h+='</div>';
-  if(mDays.length>0){
-    h+='<div class="sec-title">Riwayat Bulan Ini</div>';
-    mDays.slice().sort(function(a,b){return new Date(b.date)-new Date(a.date);}).forEach(function(d){
-      var dd=new Date(d.date);if(isNaN(dd.getTime()))return;
-      var p=pct(d.income||0,TARGET_DAILY);
-      h+='<div class="day-item'+(d.libur?' day-libur':'')+'">';
-      h+='<div class="day-row"><div class="day-name">'+DAYS[dd.getDay()]+', '+dd.getDate()+' '+MONTHS[dd.getMonth()]+(d.libur?'<span class="day-badge badge-libur">LIBUR</span>':'')+'</div>';
-      h+='<div><div style="font-size:14px;font-weight:800;color:'+(d.libur?'#4a7a9b':(p>=100?'#00c864':'#ffd700'))+';">'+(d.libur?'Libur':fRp(d.income||0))+'</div>';
-      if(!d.libur)h+='<div style="font-size:10px;color:#4a7a9b;text-align:right;">'+p+'% target</div>';
-      h+='</div></div>';
-      if(!d.libur&&(d.income||0)>0)h+='<div class="day-bar"><div class="day-bar-fill" style="width:'+p+'%;background:'+(p>=100?'#00c864':'linear-gradient(90deg,#ffc800,#ff9500)')+'"></div></div>';
-      h+='</div>';
-    });
-  } else {h+='<div class="empty">Belum ada data bulan ini</div>';}
-  h+='</div>';return h;
-}
-
-// ============ BACKUP SHEET ============
-function openBackupSheet(){
-  updateLastBackupInfo();
-  document.getElementById('bsModal').classList.add('show');
-}
-function closeBackupSheet(){
-  document.getElementById('bsModal').classList.remove('show');
-}
-function updateLastBackupInfo(){
-  var last=localStorage.getItem('g_last_export');
-  var dot=document.getElementById('bsLastDot');
-  var txt=document.getElementById('bsLastText');
-  if(!last){
-    if(dot)dot.style.background='#ff6060';
-    if(txt)txt.innerHTML='<b>Belum pernah backup</b><br/>Segera export untuk keamanan data';
-  } else {
-    var diff=Math.floor((Date.now()-new Date(last))/86400000);
-    var color=diff<=3?'#00c864':diff<=7?'#ffc800':'#ff6060';
-    if(dot)dot.style.background=color;
-    if(txt){
-      var label=diff===0?'Hari ini':diff===1?'Kemarin':diff+' hari lalu';
-      txt.innerHTML='<b>Backup terakhir: '+label+'</b><br/>'+new Date(last).toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-    }
-  }
-}
-
-// ============ EVENT LISTENERS ============
-function setupEvents(){
-  // PIN keypad
-  document.getElementById('pgrid').addEventListener('click',function(e){
-    var key=e.target.closest('.pkey');
-    if(!key||key.classList.contains('ghost'))return;
-    var txt=key.textContent.trim();
-    if(key.classList.contains('del'))pinPress('del');
-    else pinPress(txt);
-  });
-
-  // PIN tabs
-  document.getElementById('ptab-masuk').addEventListener('click',function(){setPinMode('masuk');});
-  document.getElementById('ptab-ganti').addEventListener('click',function(){setPinMode('ganti');});
-
-  // Backup FAB
-  document.getElementById('fabBackup').addEventListener('click',openBackupSheet);
-  // Import file
-  document.getElementById('importFile').addEventListener('change',importData);
-  // Bottom sheet
-  document.getElementById('bsModal').addEventListener('click',function(e){if(e.target===this)closeBackupSheet();});
-  document.getElementById('bsBtnExport').addEventListener('click',function(){exportData();closeBackupSheet();});
-  document.getElementById('bsBtnImport').addEventListener('click',function(){document.getElementById('importFile').click();closeBackupSheet();});
-
-  // App tabs
-  document.getElementById('tab-today').addEventListener('click',function(){switchTab('today');});
-  document.getElementById('tab-week').addEventListener('click',function(){switchTab('week');});
-  document.getElementById('tab-month').addEventListener('click',function(){switchTab('month');});
-
-  // Theme & Logout
-  document.getElementById('themeBtn').addEventListener('click',function(){isDark=!isDark;localStorage.setItem('g_theme',isDark?'dark':'light');applyTheme();});
-  document.getElementById('logoutBtn').addEventListener('click',logout);
-
-  // FAB
-  document.getElementById('fabCalc').addEventListener('click',openCalc);
-
-  // OFF Modal
-  document.getElementById('offModal').addEventListener('click',function(e){if(e.target===this)closeOff();});
-  document.getElementById('btnCancelOff').addEventListener('click',closeOff);
-  document.getElementById('btnConfirmOff').addEventListener('click',confirmOff);
-
-  // Calc Modal
-  document.getElementById('calcModal').addEventListener('click',function(e){if(e.target===this)closeCalc();});
-  document.getElementById('btnCloseCalc').addEventListener('click',closeCalc);
-  document.getElementById('calcTerima').addEventListener('input',calcChange);
-  document.getElementById('calcTagihan').addEventListener('input',calcChange);
-  document.getElementById('btnAddTips').addEventListener('click',addTips);
-  document.getElementById('btnResetCalc').addEventListener('click',function(){
-    document.getElementById('calcTerima').value='';document.getElementById('calcTagihan').value='';
-    document.getElementById('calcResult').textContent='Rp 0';document.getElementById('calcResult').className='calc-r-val zero';
-    document.getElementById('calcFormula').textContent='-';
-    document.getElementById('btnAddTips').style.opacity='0.3';calcVal=0;
-  });
-
-  // Content delegation
-  document.getElementById('content').addEventListener('click',function(e){
-    var t=e.target;
-    if(t.id==='onoffBtn'||t.closest('#onoffBtn'))toggleOnOff();
-    else if(t.id==='btnOpenIncome'||t.closest('#btnOpenIncome')){var f=document.getElementById('incomeInputShown');if(f){f.style.display='block';setTimeout(function(){var inp=document.getElementById('incomeInp');if(inp)inp.focus();},100);}}
-    else if(t.id==='btnEditIncome'||t.closest('#btnEditIncome')){var f=document.getElementById('incomeInputShown');if(f){f.style.display='block';setTimeout(function(){var inp=document.getElementById('incomeInp');if(inp)inp.focus();},100);}}
-    else if(t.id==='btnSaveIncome'||t.closest('#btnSaveIncome'))saveIncome();
-    else if(t.id==='btnCancelIncome'||t.closest('#btnCancelIncome')){var f=document.getElementById('incomeInputShown');if(f)f.style.display='none';}
-    else if(t.id==='btnLiburToday'||t.closest('#btnLiburToday'))toggleLibur(todayKey());
-    else if(t.id&&t.id.startsWith('btnPastIncome_'))openPastIncome(t.id.replace('btnPastIncome_',''));
-    else if(t.id&&t.id.startsWith('btnSavePast_'))savePastIncome(t.id.replace('btnSavePast_',''));
-    else if(t.id==='btnCancelPast'||t.closest('#btnCancelPast'))cancelPastIncome();
-    else if(t.id&&t.id.startsWith('btnLibur_'))toggleLibur(t.id.replace('btnLibur_',''));
-  });
-
-  // Notes blur
-  document.getElementById('content').addEventListener('blur',function(e){
-    if(e.target&&e.target.id==='noteInp')saveNote();
-  },true);
-}
-
-// ============ INIT ============
-loadData();
-setupEvents();
-</script>
-</body>
-</html>
+/* Floating Calc Button */
+.fab {
+  position: fixed; bottom: 52px; right: 16px; z-index: 60;
+  width: 58px; height: 58px; border-radius: 18px; border: none; cursor: pointer;
+  background: linear-gradient(145deg, #0d2137 0%, #071a2e 100%);
+  box-shadow: 0 0 0 1px rgba(0,200,100,0.4), 0 8px 32px rgba(0,200,100,0.25), 0 2px 8
