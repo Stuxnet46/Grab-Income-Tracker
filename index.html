@@ -502,8 +502,8 @@ function loadData(){
     var d=JSON.parse(localStorage.getItem('g_data')||'{}');
     allDays=d.allDays||[];
     var td=allDays.find(function(x){return x.date===todayKey();});
-    if(td){sessions=td.sessions||[];savedIncome=td.income||null;savedNote=td.note||'';}
-    todayTips=parseInt(localStorage.getItem('g_tips_'+todayKey())||'0',10);
+    if(td){sessions=td.sessions||[];savedIncome=td.income||null;savedNote=td.note||'';todayTips=td.tips||0;}
+    else{todayTips=0;}
     // Restore active session if browser was closed while ON
     var activeSession=localStorage.getItem('g_active_session');
     if(activeSession){
@@ -523,7 +523,7 @@ function loadData(){
 }
 function saveData(){
   try{
-    allDays=upsertDay(allDays,todayKey(),{sessions:sessions,income:savedIncome,note:savedNote});
+    allDays=upsertDay(allDays,todayKey(),{sessions:sessions,income:savedIncome,note:savedNote,tips:todayTips});
     localStorage.setItem('g_data',JSON.stringify({allDays:allDays}));
   }catch(e){}
 }
@@ -704,7 +704,7 @@ function resetCalc(){
 function addTips(){
   if(calcVal<=0)return;
   todayTips+=calcVal;
-  localStorage.setItem('g_tips_'+todayKey(),todayTips);
+  saveData(); // tips now saved inside allDays
   showToast('✅ '+fRp(calcVal)+' ditambahkan ke tips!');
   document.getElementById('totalTipsDisp').textContent=fRp(todayTips);
   resetCalc();render();
@@ -713,9 +713,7 @@ function addTips(){
 // ============ EXPORT / IMPORT ============
 function exportData(){
   try{
-    var tips={};
-    for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(k&&k.startsWith('g_tips_'))tips[k]=localStorage.getItem(k);}
-    var data={version:3,exportDate:new Date().toISOString(),allDays:allDays,tips:tips,pin:storedPin,theme:isDark?'dark':'light'};
+    var data={version:4,exportDate:new Date().toISOString(),allDays:allDays,pin:storedPin,theme:isDark?'dark':'light'};
     var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
     var url=URL.createObjectURL(blob);
     var a=document.createElement('a');
@@ -733,14 +731,24 @@ function importData(e){
     try{
       var data=JSON.parse(ev.target.result);
       if(!data.allDays){alert('File tidak valid.');return;}
+      // Migrate v3: merge separate tips keys into allDays
+      if(data.tips){
+        Object.keys(data.tips).forEach(function(k){
+          var dateKey=k.replace('g_tips_','');
+          var tipsVal=parseInt(data.tips[k]||'0',10);
+          if(!tipsVal)return;
+          var idx=data.allDays.findIndex(function(d){return d.date===dateKey;});
+          if(idx>=0){data.allDays[idx].tips=(data.allDays[idx].tips||0)+tipsVal;}
+          else{data.allDays.push({date:dateKey,income:null,sessions:[],note:'',libur:false,tips:tipsVal});}
+        });
+      }
       localStorage.setItem('g_data',JSON.stringify({allDays:data.allDays}));
-      if(data.tips)Object.keys(data.tips).forEach(function(k){localStorage.setItem(k,data.tips[k]);});
       if(data.pin){localStorage.setItem('g_pin',data.pin);storedPin=data.pin;}
       if(data.theme){localStorage.setItem('g_theme',data.theme);isDark=data.theme==='dark';applyTheme();}
       loadData();
       var dt=data.exportDate?new Date(data.exportDate).toLocaleDateString('id-ID'):'-';
       showToast('✅ Import berhasil!<br/>'+data.allDays.length+' hari dipulihkan<br/><small>Backup: '+dt+'</small>');
-      closeBs();
+      closeBs();render();
     }catch(err){alert('Gagal import: File rusak.');}
     e.target.value='';
   };
@@ -861,7 +869,7 @@ function renderToday(){
 
 function renderWeek(){
   var weekDays=getWeekDays(),tKey=todayKey();
-  var wTotal=weekDays.filter(function(d){return !d.libur;}).reduce(function(a,d){return a+(d.income||0);},0);
+  var wTotal=weekDays.filter(function(d){return !d.libur;}).reduce(function(a,d){return a+(d.income||0)+(d.tips||0);},0);
   var wp=pct(wTotal,TARGET_WEEKLY);
   var h='<div class="fade-in">';
   h+='<div class="card card-green"><div class="card-label label-green">Total Minggu Ini</div><div class="big-num num-green">'+fRp(wTotal)+'</div>';
@@ -893,8 +901,8 @@ function renderWeek(){
 
 function renderMonth(){
   var now=new Date(),mDays=getMonthDays();
-  var wDays=mDays.filter(function(d){return d.income>0&&!d.libur;});
-  var mTotal=wDays.reduce(function(a,d){return a+(d.income||0);},0);
+  var wDays=mDays.filter(function(d){return (d.income>0||d.tips>0)&&!d.libur;});
+  var mTotal=wDays.reduce(function(a,d){return a+(d.income||0)+(d.tips||0);},0);
   var mp=pct(mTotal,TARGET_MONTHLY),avg=wDays.length>0?mTotal/wDays.length:0;
   var est=wDays.length>0?avg*26:0,totalBBM=wDays.length*BBM,bersih=mTotal-totalBBM;
   var h='<div class="fade-in">';
@@ -914,10 +922,12 @@ function renderMonth(){
       var dd=new Date(d.date);if(isNaN(dd.getTime()))return;
       var p=pct(d.income||0,TARGET_DAILY);
       h+='<div class="day-item'+(d.libur?' libur':'')+'"><div class="day-row"><div class="day-name">'+DAYS[dd.getDay()]+', '+dd.getDate()+' '+MONTHS[dd.getMonth()]+(d.libur?'<span class="day-badge libur-badge">LIBUR</span>':'')+'</div>';
-      h+='<div><div class="day-income" style="color:'+(d.libur?'var(--muted)':(p>=100?'var(--green)':'var(--gold)'))+'">'+(d.libur?'Libur':fRp(d.income||0))+'</div>';
-      if(!d.libur)h+='<div style="font-size:10px;color:var(--muted);text-align:right;">'+p+'% target</div>';
+      var dayTotal=(d.income||0)+(d.tips||0);
+      h+='<div><div class="day-income" style="color:'+(d.libur?'var(--muted)':(pct(dayTotal,TARGET_DAILY)>=100?'var(--green)':'var(--gold)'))+'">'+(d.libur?'Libur':fRp(dayTotal))+'</div>';
+      if(!d.libur&&d.tips>0)h+='<div style="font-size:10px;color:var(--green);text-align:right;">+Tips '+fRp(d.tips)+'</div>';
+      if(!d.libur)h+='<div style="font-size:10px;color:var(--muted);text-align:right;">'+pct(dayTotal,TARGET_DAILY)+'% target</div>';
       h+='</div></div>';
-      if(!d.libur&&(d.income||0)>0)h+='<div class="day-bar"><div class="day-bar-fill" style="width:'+p+'%;background:'+(p>=100?'var(--green)':'linear-gradient(90deg,#ffc800,#ff9500)')+'"></div></div>';
+      if(!d.libur&&dayTotal>0)h+='<div class="day-bar"><div class="day-bar-fill" style="width:'+pct(dayTotal,TARGET_DAILY)+'%;background:'+(pct(dayTotal,TARGET_DAILY)>=100?'var(--green)':'linear-gradient(90deg,#ffc800,#ff9500)')+'"></div></div>';
       h+='</div>';
     });
   }else{h+='<div class="empty">Belum ada data bulan ini</div>';}
