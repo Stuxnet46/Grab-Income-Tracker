@@ -783,12 +783,21 @@ function checkBackupReminder(){
 // ============ DATA GETTERS ============
 function getWeekDays(){
   var days=[];
-  for(var i=6;i>=0;i--){var d=new Date();d.setDate(d.getDate()-i);var k=d.toDateString();days.push(Object.assign({},getDay(k),{date:d,key:k}));}
+  for(var i=6;i>=0;i--){
+    var d=new Date();d.setDate(d.getDate()-i);var k=d.toDateString();
+    var dayData=Object.assign({},getDay(k),{date:d,key:k});
+    if(k===todayKey())dayData.tips=todayTips; // use live tips for today
+    days.push(dayData);
+  }
   return days;
 }
 function getMonthDays(){
   var now=new Date();
-  return allDays.filter(function(d){var dd=new Date(d.date);return dd.getMonth()===now.getMonth()&&dd.getFullYear()===now.getFullYear();});
+  var mDays=allDays.filter(function(d){var dd=new Date(d.date);return dd.getMonth()===now.getMonth()&&dd.getFullYear()===now.getFullYear();});
+  return mDays.map(function(d){
+    if(d.date===todayKey())return Object.assign({},d,{tips:todayTips}); // use live tips for today
+    return d;
+  });
 }
 
 // ============ RENDER ============
