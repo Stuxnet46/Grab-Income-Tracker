@@ -887,20 +887,22 @@ function renderWeek(){
   h+='<div class="progress-note '+(wp>=100?'success':'')+'">'+(wp>=100?'🎉 Target minggu tercapai!':'Kurang '+fRp(TARGET_WEEKLY-wTotal))+'</div></div></div>';
   h+='<div class="section-title">Rincian Per Hari</div>';
   weekDays.forEach(function(d){
-    var isToday=d.key===tKey,p=pct(d.income||0,TARGET_DAILY),canEdit=canEditDay(d.key),isEditing=editingDay===d.key;
+    var dayTotal=(d.income||0)+(d.tips||0);
+    var isToday=d.key===tKey,p=pct(dayTotal,TARGET_DAILY),canEdit=canEditDay(d.key),isEditing=editingDay===d.key;
     var clr=p>=100?'var(--green-bright)':'var(--gold)';
     h+='<div class="day-item'+(isToday?' today':'')+(d.libur?' libur':'')+'"><div class="day-row">';
     h+='<div class="day-name'+(isToday?' today':'')+'">'+DAYS[d.date.getDay()]+', '+d.date.getDate()+' '+MONTHS[d.date.getMonth()];
     if(isToday)h+='<span class="day-badge">HARI INI</span>';
     if(d.libur)h+='<span class="day-badge libur-badge">LIBUR</span>';
-    h+='</div><div class="day-income" style="color:'+(d.libur?'var(--muted)':(d.income>0?clr:'var(--muted)'))+'">'+(d.libur?'Libur':(d.income>0?fRp(d.income):'-'))+'</div></div>';
-    if(d.income>0&&!d.libur)h+='<div class="day-bar"><div class="day-bar-fill" style="width:'+p+'%;background:'+(p>=100?'var(--green)':'linear-gradient(90deg,#ffc800,#ff9500)')+'"></div></div>';
+    h+='</div><div class="day-income" style="color:'+(d.libur?'var(--muted)':(dayTotal>0?clr:'var(--muted)'))+'">'+(d.libur?'Libur':(dayTotal>0?fRp(dayTotal):'-'))+'</div></div>';
+    if(d.tips>0&&d.income>0&&!d.libur)h+='<div style="font-size:10px;color:var(--green);margin-bottom:4px;">Grab '+fRp(d.income||0)+' + Tips '+fRp(d.tips||0)+'</div>';
+    if(dayTotal>0&&!d.libur)h+='<div class="day-bar"><div class="day-bar-fill" style="width:'+p+'%;background:'+(p>=100?'var(--green)':'linear-gradient(90deg,#ffc800,#ff9500)')+'"></div></div>';
     if(isEditing){
       h+='<div style="margin-top:8px;"><div style="font-size:11px;color:var(--gold);margin-bottom:5px;">Penghasilan bersih (Rp):</div>';
       h+='<input class="past-inp" type="number" id="pastInp_'+d.key+'" placeholder="150000"/>';
       h+='<div style="display:flex;gap:7px;"><div id="btnSavePast_'+d.key+'" class="btn btn-gold">Simpan</div><div id="btnCancelPast" class="btn btn-ghost">✕</div></div></div>';
     }else if(canEdit&&!d.libur){
-      h+='<div id="btnPastInc_'+d.key+'" class="btn-outline-gold" style="display:block;margin-top:7px;">'+(d.income>0?'✏️ Edit Penghasilan':'💰 Input Penghasilan')+'</div>';
+      h+='<div id="btnPastInc_'+d.key+'" class="btn-outline-gold" style="display:block;margin-top:7px;">'+(d.income>0||d.tips>0?'✏️ Edit Penghasilan':'💰 Input Penghasilan')+'</div>';
     }
     if(canEditDay(d.key))h+='<div id="btnLibur_'+d.key+'" class="libur-btn'+(d.libur?' active':'')+'" style="margin-top:6px;font-size:11px;">'+(d.libur?'✅ Libur — Batalkan':'🏖️ Tandai Libur')+'</div>';
     h+='</div>';
