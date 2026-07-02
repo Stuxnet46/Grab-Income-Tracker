@@ -274,6 +274,26 @@ body{font-family:'DM Sans',sans-serif;color:var(--text);background:var(--page-bg
 .inc-row{display:flex;justify-content:space-between;align-items:center;padding:2px 0;font-size:12px;}
 .inc-total{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-top:1px solid var(--border);margin-top:4px;}
 
+
+/* HISTORY TAB */
+.hist-month-card{border-radius:14px;border:1px solid var(--border);background:var(--card-bg);margin-bottom:10px;overflow:hidden;transition:background 0.3s;}
+.hist-month-header{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;cursor:pointer;user-select:none;touch-action:manipulation;}
+.hist-month-header:active{opacity:0.7;}
+.hist-month-left{}
+.hist-month-name{font-size:15px;font-weight:800;font-family:'Syne',sans-serif;}
+.hist-month-days{font-size:11px;color:var(--muted);margin-top:2px;}
+.hist-month-right{display:flex;align-items:center;gap:10px;}
+.hist-month-total{font-size:16px;font-weight:800;color:var(--green);font-variant-numeric:tabular-nums;}
+.hist-month-arrow{font-size:12px;color:var(--muted);transition:transform 0.25s;}
+.hist-month-arrow.open{transform:rotate(90deg);}
+.hist-days-list{border-top:1px solid var(--border);padding:8px 0;}
+.hist-day-row{display:flex;justify-content:space-between;align-items:center;padding:9px 16px;}
+.hist-day-row:not(:last-child){border-bottom:1px solid var(--border);}
+.hist-day-name{font-size:13px;font-weight:600;}
+.hist-day-income{font-size:13px;font-weight:800;font-variant-numeric:tabular-nums;}
+.hist-day-libur{font-size:11px;color:#ff6060;font-weight:700;}
+.hist-day-empty{font-size:13px;color:var(--muted);}
+.hist-tips-note{font-size:10px;color:var(--green);margin-top:1px;}
 input[type=number]::-webkit-outer-spin-button,
 input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
 </style>
@@ -335,6 +355,7 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
       <button class="tab active" id="tab-today">Hari Ini</button>
       <button class="tab inactive" id="tab-week">Mingguan</button>
       <button class="tab inactive" id="tab-month">Bulanan</button>
+      <button class="tab inactive" id="tab-history">Riwayat</button>
     </div>
   </div>
   <div class="content" id="content"></div>
@@ -630,7 +651,7 @@ function tickClock(){
 // ============ TABS ============
 function switchTab(t){
   currentTab=t;
-  ['today','week','month'].forEach(function(id){
+  ['today','week','month','history'].forEach(function(id){
     var el=document.getElementById('tab-'+id);
     if(el)el.className='tab '+(id===t?'active':'inactive');
   });
@@ -801,7 +822,7 @@ function getMonthDays(){
 }
 
 // ============ RENDER ============
-function render(){var el=document.getElementById('content');if(!el)return;if(currentTab==='today')el.innerHTML=renderToday();else if(currentTab==='week')el.innerHTML=renderWeek();else el.innerHTML=renderMonth();}
+function render(){var el=document.getElementById('content');if(!el)return;if(currentTab==='today')el.innerHTML=renderToday();else if(currentTab==='week')el.innerHTML=renderWeek();else if(currentTab==='month')el.innerHTML=renderMonth();else el.innerHTML=renderHistory();}
 
 function renderToday(){
   var ms=totalMs(),liveMs=isOn&&currentOnTime?(Date.now()-currentOnTime):0;
@@ -945,6 +966,93 @@ function renderMonth(){
   h+='</div>';return h;
 }
 
+// ============ HISTORY ============
+var openHistMonths={};
+function toggleHistMonth(key){
+  openHistMonths[key]=!openHistMonths[key];
+  render();
+}
+function renderHistory(){
+  var h='<div class="fade-in">';
+  h+='<div class="section-title">Riwayat Penghasilan</div>';
+
+  // Build months from July 2025 to current month
+  var startYear=2025,startMonth=6; // July = month index 6
+  var now=new Date();
+  var months=[];
+  var y=startYear,m=startMonth;
+  while(y<now.getFullYear()||(y===now.getFullYear()&&m<=now.getMonth())){
+    months.push({year:y,month:m});
+    m++;if(m>11){m=0;y++;}
+  }
+
+  if(months.length===0){h+='<div class="empty">Belum ada data</div></div>';return h;}
+
+  months.forEach(function(mo){
+    var mKey=mo.year+'-'+mo.month;
+    var isOpen=!!openHistMonths[mKey];
+
+    // Get all days for this month
+    var mDays=allDays.filter(function(d){
+      var dd=new Date(d.date);
+      return dd.getFullYear()===mo.year&&dd.getMonth()===mo.month;
+    });
+
+    // Calculate total (income + tips, exclude libur)
+    var mTotal=mDays.filter(function(d){return !d.libur;}).reduce(function(a,d){return a+(d.income||0)+(d.tips||0);},0);
+    var workDays=mDays.filter(function(d){return !d.libur&&((d.income||0)+(d.tips||0))>0;}).length;
+
+    var monthName=MONTHS[mo.month]+' '+mo.year;
+
+    h+='<div class="hist-month-card">';
+    h+='<div class="hist-month-header" id="histHdr_'+mKey+'">';
+    h+='<div class="hist-month-left">';
+    h+='<div class="hist-month-name">'+monthName+'</div>';
+    h+='<div class="hist-month-days">'+(workDays>0?workDays+' hari kerja':'Belum ada data')+'</div>';
+    h+='</div>';
+    h+='<div class="hist-month-right">';
+    h+='<div class="hist-month-total">'+(mTotal>0?fRp(mTotal):'-')+'</div>';
+    h+='<div class="hist-month-arrow'+(isOpen?' open':'')+'">▶</div>';
+    h+='</div></div>';
+
+    if(isOpen){
+      h+='<div class="hist-days-list">';
+      // Get all days in this calendar month
+      var daysInMonth=new Date(mo.year,mo.month+1,0).getDate();
+      for(var day=1;day<=daysInMonth;day++){
+        var d=new Date(mo.year,mo.month,day);
+        // Only show up to today
+        if(d>now)break;
+        var dKey=d.toDateString();
+        var dayData=allDays.find(function(x){return x.date===dKey;});
+        var dayTotal=dayData?((dayData.income||0)+(dayData.tips||0)):0;
+        var isLibur=dayData&&dayData.libur;
+        var dayName=DAYS[d.getDay()]+', '+day+' '+MONTHS[mo.month];
+
+        h+='<div class="hist-day-row">';
+        h+='<div><div class="hist-day-name">'+dayName+'</div>';
+        if(dayData&&dayData.tips>0&&dayData.income>0&&!isLibur){
+          h+='<div class="hist-tips-note">Grab '+fRp(dayData.income)+' + Tips '+fRp(dayData.tips)+'</div>';
+        }
+        h+='</div>';
+        if(isLibur){
+          h+='<div class="hist-day-libur">🏖️ Libur</div>';
+        }else if(dayTotal>0){
+          h+='<div class="hist-day-income" style="color:var(--gold);">'+fRp(dayTotal)+'</div>';
+        }else{
+          h+='<div class="hist-day-empty">-</div>';
+        }
+        h+='</div>';
+      }
+      h+='</div>';
+    }
+    h+='</div>';
+  });
+
+  h+='</div>';
+  return h;
+}
+
 // ============ EVENTS ============
 function setupEvents(){
   // PIN grid
@@ -971,6 +1079,7 @@ function setupEvents(){
   document.getElementById('tab-today').addEventListener('click',function(){switchTab('today');});
   document.getElementById('tab-week').addEventListener('click',function(){switchTab('week');});
   document.getElementById('tab-month').addEventListener('click',function(){switchTab('month');});
+  document.getElementById('tab-history').addEventListener('click',function(){switchTab('history');});
 
   // FAB Calc
   document.getElementById('fabCalc').addEventListener('click',openCalc);
@@ -990,6 +1099,9 @@ function setupEvents(){
 
   // Content delegation
   document.getElementById('content').addEventListener('click',function(e){
+    // History month accordion
+    var histHdr=e.target.closest('[id^="histHdr_"]');
+    if(histHdr){var mKey=histHdr.id.replace('histHdr_','');toggleHistMonth(mKey);return;}
     var t=e.target.closest('[id]');if(!t)return;var id=t.id;
     if(id==='onoffBtn')toggleOnOff();
     else if(id==='btnOpenIncome'||id==='btnEditIncome'){var f=document.getElementById('incomeForm');if(f){f.style.display='block';setTimeout(function(){var inp=document.getElementById('incomeInp');if(inp)inp.focus();},100);}}
