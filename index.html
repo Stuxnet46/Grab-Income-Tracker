@@ -813,10 +813,18 @@ function getWeekDays(){
   return days;
 }
 function getMonthDays(){
-  var now=new Date();
-  var mDays=allDays.filter(function(d){var dd=new Date(d.date);return dd.getMonth()===now.getMonth()&&dd.getFullYear()===now.getFullYear();});
+  var curDate=new Date();
+  var curMonth=curDate.getMonth();
+  var curYear=curDate.getFullYear();
+  // Build valid keys for current month
+  var daysInCurMonth=new Date(curYear,curMonth+1,0).getDate();
+  var validKeys={};
+  for(var di=1;di<=daysInCurMonth;di++){
+    validKeys[new Date(curYear,curMonth,di).toDateString()]=true;
+  }
+  var mDays=allDays.filter(function(d){return !!validKeys[d.date];});
   return mDays.map(function(d){
-    if(d.date===todayKey())return Object.assign({},d,{tips:todayTips}); // use live tips for today
+    if(d.date===todayKey())return Object.assign({},d,{tips:todayTips});
     return d;
   });
 }
@@ -932,13 +940,13 @@ function renderWeek(){
 }
 
 function renderMonth(){
-  var now=new Date(),mDays=getMonthDays();
+  var now=new Date();var curMonth=now.getMonth();var curYear=now.getFullYear();var mDays=getMonthDays();
   var wDays=mDays.filter(function(d){return (d.income>0||d.tips>0)&&!d.libur;});
   var mTotal=wDays.reduce(function(a,d){return a+(d.income||0)+(d.tips||0);},0);
   var mp=pct(mTotal,TARGET_MONTHLY),avg=wDays.length>0?mTotal/wDays.length:0;
   var est=wDays.length>0?avg*26:0,totalBBM=wDays.length*BBM,bersih=mTotal-totalBBM;
   var h='<div class="fade-in">';
-  h+='<div class="card card-purple"><div class="card-label label-purple">Total '+MONTHS[now.getMonth()]+' '+now.getFullYear()+'</div><div class="big-num num-purple">'+fRp(mTotal)+'</div>';
+  h+='<div class="card card-purple"><div class="card-label label-purple">Total '+MONTHS[curMonth]+' '+curYear+'</div><div class="big-num num-purple">'+fRp(mTotal)+'</div>';
   h+='<div class="progress-wrap"><div class="progress-meta"><span>Target: '+fRp(TARGET_MONTHLY)+'</span><span class="progress-pct" style="color:'+(mp>=100?'var(--green)':'#a67fff')+';">'+mp+'%</span></div>';
   h+='<div class="progress-track"><div class="progress-fill fill-purple" style="width:'+mp+'%;"></div></div>';
   h+='<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:4px;"><span>Hari kerja: '+wDays.length+' / 26</span>'+(mp<100?'<span>Kurang '+fRp(TARGET_MONTHLY-mTotal)+'</span>':'')+'</div>';
@@ -976,8 +984,8 @@ function renderHistory(){
   var h='<div class="fade-in">';
   h+='<div class="section-title">Riwayat Penghasilan</div>';
 
-  // Build months from July 2025 to current month
-  var startYear=2025,startMonth=6; // July = month index 6
+  // Build months from July 2026 to current month
+  var startYear=2026,startMonth=6; // July 2026 = month index 6
   var now=new Date();
   var months=[];
   var y=startYear,m=startMonth;
@@ -1030,7 +1038,8 @@ function renderHistory(){
         var dKey=d.toDateString();
         var storedDay=allDays.find(function(x){return x.date===dKey;});
         // For today use live state from memory
-        var dayData=dKey===todayKey()
+        var isToday=dKey===todayKey();
+        var dayData=isToday
           ?{income:savedIncome,tips:todayTips,libur:storedDay?storedDay.libur:false}
           :storedDay;
         var dayTotal=dayData?((dayData.income||0)+(dayData.tips||0)):0;
@@ -1131,6 +1140,15 @@ function setupEvents(){
 // ============ INIT ============
 loadData();
 setupEvents();
+// Auto-save on browser close/refresh
+window.addEventListener('beforeunload', function(){
+  if(savedIncome||todayTips>0||sessions.length>0){
+    saveData();
+  }
+  if(isOn&&currentOnTime){
+    saveActiveSession();
+  }
+});
 </script>
 </body>
 </html>
