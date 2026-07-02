@@ -992,11 +992,14 @@ function renderHistory(){
     var mKey=mo.year+'-'+mo.month;
     var isOpen=!!openHistMonths[mKey];
 
-    // Get all days for this month
-    var mDays=allDays.filter(function(d){
-      var dd=new Date(d.date);
-      return dd.getFullYear()===mo.year&&dd.getMonth()===mo.month;
-    });
+    // Get all days for this month - match by building datestring for each day
+    // Build a set of valid date strings for this month
+    var daysInMonthCheck=new Date(mo.year,mo.month+1,0).getDate();
+    var validKeys={};
+    for(var di=1;di<=daysInMonthCheck;di++){
+      validKeys[new Date(mo.year,mo.month,di).toDateString()]=true;
+    }
+    var mDays=allDays.filter(function(d){return !!validKeys[d.date];});
 
     // Calculate total (income + tips, exclude libur)
     var mTotal=mDays.filter(function(d){return !d.libur;}).reduce(function(a,d){return a+(d.income||0)+(d.tips||0);},0);
@@ -1019,12 +1022,17 @@ function renderHistory(){
       h+='<div class="hist-days-list">';
       // Get all days in this calendar month
       var daysInMonth=new Date(mo.year,mo.month+1,0).getDate();
+      var todayDate=new Date(now.getFullYear(),now.getMonth(),now.getDate());
       for(var day=1;day<=daysInMonth;day++){
         var d=new Date(mo.year,mo.month,day);
-        // Only show up to today
-        if(d>now)break;
+        // Only show up to today (date only, no time comparison)
+        if(d>todayDate)break;
         var dKey=d.toDateString();
-        var dayData=allDays.find(function(x){return x.date===dKey;});
+        var storedDay=allDays.find(function(x){return x.date===dKey;});
+        // For today use live state from memory
+        var dayData=dKey===todayKey()
+          ?{income:savedIncome,tips:todayTips,libur:storedDay?storedDay.libur:false}
+          :storedDay;
         var dayTotal=dayData?((dayData.income||0)+(dayData.tips||0)):0;
         var isLibur=dayData&&dayData.libur;
         var dayName=DAYS[d.getDay()]+', '+day+' '+MONTHS[mo.month];
