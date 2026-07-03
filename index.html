@@ -1005,7 +1005,7 @@ function renderHistory(){
     var daysInMonthCheck=new Date(mo.year,mo.month+1,0).getDate();
     var validKeys={};
     for(var di=1;di<=daysInMonthCheck;di++){
-      validKeys[new Date(mo.year,mo.month,di).toDateString()]=true;
+      validKeys[new Date(mo.year,mo.month,di,12,0,0).toDateString()]=true;
     }
     var mDays=allDays.filter(function(d){return !!validKeys[d.date];});
 
@@ -1028,17 +1028,22 @@ function renderHistory(){
 
     if(isOpen){
       h+='<div class="hist-days-list">';
-      // Get all days in this calendar month
+      // Get all days in this calendar month - use noon to avoid timezone offset
       var daysInMonth=new Date(mo.year,mo.month+1,0).getDate();
-      var todayDate=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+      var tKey=todayKey(); // e.g. "Fri Jul 03 2026"
+      var tDate=new Date(); // real now with time
+      var tYear=tDate.getFullYear(),tMonth=tDate.getMonth(),tDay=tDate.getDate();
       for(var day=1;day<=daysInMonth;day++){
-        var d=new Date(mo.year,mo.month,day);
-        // Only show up to today (date only, no time comparison)
-        if(d>todayDate)break;
+        // Skip future dates
+        if(mo.year>tYear)break;
+        if(mo.year===tYear&&mo.month>tMonth)break;
+        if(mo.year===tYear&&mo.month===tMonth&&day>tDay)break;
+        // Build date key same way as todayKey() = new Date().toDateString()
+        var d=new Date(mo.year,mo.month,day,12,0,0); // noon avoids DST shift
         var dKey=d.toDateString();
         var storedDay=allDays.find(function(x){return x.date===dKey;});
         // For today use live state from memory
-        var isToday=dKey===todayKey();
+        var isToday=dKey===tKey;
         var dayData=isToday
           ?{income:savedIncome,tips:todayTips,libur:storedDay?storedDay.libur:false}
           :storedDay;
