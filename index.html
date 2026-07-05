@@ -334,6 +334,7 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
       <button class="pin-key del" data-k="del">⌫</button>
     </div>
     <div class="pin-footer-note">© Gentara Anugrah • Grab Driver Income Tracker</div>
+    <div id="debugBtn" style="margin-top:14px;font-size:11px;color:var(--muted);cursor:pointer;text-decoration:underline;" onclick="showDebug()">🔍 Cek Data Tersimpan</div>
   </div>
 </div>
 
@@ -1186,6 +1187,40 @@ function setupEvents(){
   document.getElementById('content').addEventListener('blur',function(e){
     if(e.target&&e.target.id==='noteInp')saveNote();
   },true);
+}
+
+// ============ DEBUG ============
+function showDebug(){
+  try{
+    var raw=localStorage.getItem('g_data');
+    if(!raw){alert('localStorage KOSONG\nTidak ada data tersimpan!');return;}
+    var d=JSON.parse(raw);
+    var days=d.allDays||[];
+    var today=new Date().toDateString();
+    var todayData=days.find(function(x){return x.date===today;});
+    var msg='Total hari tersimpan: '+days.length+'\n\n';
+    msg+='Hari ini ('+today+'):\n';
+    if(todayData){
+      msg+='- Income: '+(todayData.income||0)+'\n';
+      msg+='- Tips: '+(todayData.tips||0)+'\n';
+      msg+='- Sessions: '+(todayData.sessions||[]).length+' sesi\n';
+      (todayData.sessions||[]).forEach(function(s,i){
+        var dur=Math.round(s.duration/60000);
+        msg+='  Sesi '+(i+1)+': '+dur+' menit\n';
+      });
+    }else{
+      msg+='TIDAK ADA DATA HARI INI\n';
+    }
+    // Active session
+    var active=localStorage.getItem('g_active_session');
+    msg+='\nActive session: '+(active?'ADA':'TIDAK ADA')+'\n';
+    if(active){
+      var as=JSON.parse(active);
+      msg+='Date: '+as.date+'\n';
+      msg+='OnTime: '+new Date(as.onTime).toLocaleTimeString('id-ID');
+    }
+    alert(msg);
+  }catch(e){alert('Error: '+e.message);}
 }
 
 // ============ INIT ============
