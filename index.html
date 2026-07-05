@@ -524,7 +524,7 @@ function loadData(){
     allDays=d.allDays||[];
     var td=allDays.find(function(x){return x.date===todayKey();});
     if(td){sessions=td.sessions||[];savedIncome=td.income||null;savedNote=td.note||'';todayTips=td.tips||0;}
-    else{todayTips=0;}
+    else{sessions=[];savedIncome=null;savedNote='';todayTips=0;}
     // Restore active session if browser was closed while ON
     var activeSession=localStorage.getItem('g_active_session');
     if(activeSession){
@@ -630,6 +630,7 @@ function logout(){
   // Now safe to reset state
   sessions=[];savedIncome=null;savedNote='';editingDay=null;todayTips=0;
   if(clockInt){clearInterval(clockInt);clockInt=null;}
+  if(window._autoSaveInt){clearInterval(window._autoSaveInt);window._autoSaveInt=null;}
   pinInput='';pinNewTemp='';setPinMode('masuk');
   document.getElementById('app').style.display='none';
   document.getElementById('pinScreen').style.display='flex';
@@ -639,6 +640,16 @@ function logout(){
 function startClock(){
   if(clockInt)clearInterval(clockInt);
   clockInt=setInterval(tickClock,1000);tickClock();
+  // Auto-save every 30 seconds to prevent data loss
+  if(window._autoSaveInt)clearInterval(window._autoSaveInt);
+  window._autoSaveInt=setInterval(function(){
+    if(sessions.length>0||savedIncome||todayTips>0){
+      saveData();
+    }
+    if(isOn&&currentOnTime){
+      saveActiveSession();
+    }
+  },30000);
 }
 function tickClock(){
   var now=new Date();
