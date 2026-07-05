@@ -334,7 +334,6 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
       <button class="pin-key del" data-k="del">⌫</button>
     </div>
     <div class="pin-footer-note">© Gentara Anugrah • Grab Driver Income Tracker</div>
-    <div id="debugBtn" style="margin-top:14px;font-size:11px;color:var(--muted);cursor:pointer;text-decoration:underline;" onclick="showDebug()">🔍 Cek Data Tersimpan</div>
   </div>
 </div>
 
@@ -518,6 +517,19 @@ function canEditDay(k){
   return new Date(k)>=mb&&new Date(k)<=new Date();
 }
 
+// ============ SESSION MERGE HELPER ============
+// Merges two session arrays keyed by onTime so that concurrent tabs
+// never wipe out each other's sessions - the union always wins.
+function mergeSessions(a,b){
+  var map={};
+  (a||[]).forEach(function(s){if(s&&s.onTime)map[s.onTime]=s;});
+  (b||[]).forEach(function(s){if(s&&s.onTime)map[s.onTime]=s;});
+  var out=[];
+  for(var k in map){if(map.hasOwnProperty(k))out.push(map[k]);}
+  out.sort(function(x,y){return x.onTime-y.onTime;});
+  return out;
+}
+
 // ============ STORAGE ============
 function loadData(){
   try{
@@ -543,10 +555,26 @@ function loadData(){
     }
   }catch(e){}
 }
+// saveData() now always re-reads the freshest copy of g_data from
+// localStorage first, merges today's sessions (union, not overwrite),
+// and only then writes back. This prevents a stale tab from wiping
+// out sessions that another tab already saved.
 function saveData(){
   try{
-    allDays=upsertDay(allDays,todayKey(),{sessions:sessions,income:savedIncome,note:savedNote,tips:todayTips});
-    localStorage.setItem('g_data',JSON.stringify({allDays:allDays}));
+    var stored=JSON.parse(localStorage.getItem('g_data')||'{}');
+    var days=stored.allDays||[];
+    var tKey=todayKey();
+    var existing=days.find(function(d){return d.date===tKey;});
+    var mergedSessions=mergeSessions(existing?existing.sessions:[],sessions);
+    days=upsertDay(days,tKey,{
+      sessions:mergedSessions,
+      income:savedIncome!=null?savedIncome:(existing?existing.income:null),
+      note:savedNote||(existing?existing.note:''),
+      tips:Math.max(todayTips||0,existing?(existing.tips||0):0)
+    });
+    localStorage.setItem('g_data',JSON.stringify({allDays:days}));
+    allDays=days;
+    sessions=mergedSessions; // keep this tab's memory in sync too
   }catch(e){}
 }
 function saveActiveSession(){
@@ -558,6 +586,21 @@ function saveActiveSession(){
     }
   }catch(e){}
 }
+
+// ============ CROSS-TAB SYNC ============
+// If another tab writes to g_data (e.g. it saved a session), pick up
+// those changes here instead of only trusting this tab's memory.
+window.addEventListener('storage',function(e){
+  if(e.key==='g_data'){
+    var wasOn=isOn,onTime=currentOnTime;
+    loadData();
+    // loadData() re-derives isOn/currentOnTime from g_active_session,
+    // but if this tab itself has an active session that hasn't been
+    // flushed to g_active_session yet, keep it.
+    if(wasOn&&onTime&&!isOn){isOn=true;currentOnTime=onTime;}
+    render();
+  }
+});
 
 // ============ TOAST ============
 function showToast(msg,warn){
@@ -635,7 +678,7 @@ function logout(){
     sessions.push({onTime:currentOnTime,offTime:off,note:'Keluar',duration:off-currentOnTime});
     isOn=false;currentOnTime=null;
   }
-  // Save ALL data FIRST before clearing state
+  // Save ALL data FIRST before clearing state (read-merge-write, safe with multi-tab)
   saveData();
   saveActiveSession(); // clear active session flag
   // Now safe to reset state
@@ -704,22 +747,26 @@ function confirmOff(){
   sessions.push(newSession);
   isOn=false;currentOnTime=null;
   saveActiveSession(); // clear active session
-  // Force save directly to localStorage immediately
+  // Read-merge-write directly to localStorage: read the freshest data,
+  // merge this session in by onTime (union-safe against other tabs),
+  // then write back. Never overwrite another tab's sessions.
   try{
     var stored=JSON.parse(localStorage.getItem('g_data')||'{}');
     var days=stored.allDays||[];
     var tKey=todayKey();
     var idx=days.findIndex(function(d){return d.date===tKey;});
+    var mergedSessions=mergeSessions(idx>=0?days[idx].sessions:[],sessions);
     if(idx>=0){
-      days[idx].sessions=sessions;
-      days[idx].income=savedIncome;
-      days[idx].tips=todayTips;
-      days[idx].note=savedNote;
+      days[idx].sessions=mergedSessions;
+      days[idx].income=savedIncome!=null?savedIncome:days[idx].income;
+      days[idx].tips=Math.max(todayTips||0,days[idx].tips||0);
+      days[idx].note=savedNote||days[idx].note;
     }else{
-      days.push({date:tKey,sessions:sessions,income:savedIncome,tips:todayTips,note:savedNote,libur:false});
+      days.push({date:tKey,sessions:mergedSessions,income:savedIncome,tips:todayTips,note:savedNote,libur:false});
     }
     localStorage.setItem('g_data',JSON.stringify({allDays:days}));
     allDays=days;
+    sessions=mergedSessions;
   }catch(e){saveData();}
   closeOff();render();
 }
@@ -734,9 +781,13 @@ function saveNote(){var el=document.getElementById('noteInp');if(el){savedNote=e
 
 // ============ LIBUR ============
 function toggleLibur(k){
-  var d=getDay(k);
-  allDays=upsertDay(allDays,k,Object.assign({},d,{libur:!d.libur}));
-  localStorage.setItem('g_data',JSON.stringify({allDays:allDays}));
+  var stored=JSON.parse(localStorage.getItem('g_data')||'{}');
+  var days=stored.allDays||allDays;
+  var d=days.find(function(x){return x.date===k;})||{date:k,income:null,sessions:[],note:'',libur:false};
+  days=upsertDay(days,k,Object.assign({},d,{libur:!d.libur}));
+  localStorage.setItem('g_data',JSON.stringify({allDays:days}));
+  allDays=days;
+  if(k===todayKey())sessions=(days.find(function(x){return x.date===k;})||{}).sessions||sessions;
   render();
 }
 
@@ -746,8 +797,12 @@ function savePastIncome(k){
   var el=document.getElementById('pastInp_'+k);if(!el)return;
   var v=parseInt(el.value.replace(/\D/g,''),10);
   if(!isNaN(v)&&v>0){
-    allDays=upsertDay(allDays,k,Object.assign({},getDay(k),{income:v}));
-    localStorage.setItem('g_data',JSON.stringify({allDays:allDays}));
+    var stored=JSON.parse(localStorage.getItem('g_data')||'{}');
+    var days=stored.allDays||allDays;
+    var d=days.find(function(x){return x.date===k;})||{date:k,income:null,sessions:[],note:'',libur:false};
+    days=upsertDay(days,k,Object.assign({},d,{income:v}));
+    localStorage.setItem('g_data',JSON.stringify({allDays:days}));
+    allDays=days;
     editingDay=null;render();showToast('✅ Penghasilan disimpan!');
   }
 }
@@ -776,7 +831,7 @@ function resetCalc(){
 function addTips(){
   if(calcVal<=0)return;
   todayTips+=calcVal;
-  saveData(); // tips now saved inside allDays
+  saveData(); // tips now saved inside allDays (read-merge-write)
   showToast('✅ '+fRp(calcVal)+' ditambahkan ke tips!');
   document.getElementById('totalTipsDisp').textContent=fRp(todayTips);
   resetCalc();render();
@@ -1215,45 +1270,33 @@ function setupEvents(){
   },true);
 }
 
-// ============ DEBUG ============
-function showDebug(){
-  try{
-    var raw=localStorage.getItem('g_data');
-    if(!raw){alert('localStorage KOSONG\nTidak ada data tersimpan!');return;}
-    var d=JSON.parse(raw);
-    var days=d.allDays||[];
-    var today=new Date().toDateString();
-    var todayData=days.find(function(x){return x.date===today;});
-    var msg='Total hari tersimpan: '+days.length+'\n\n';
-    msg+='Hari ini ('+today+'):\n';
-    if(todayData){
-      msg+='- Income: '+(todayData.income||0)+'\n';
-      msg+='- Tips: '+(todayData.tips||0)+'\n';
-      msg+='- Sessions: '+(todayData.sessions||[]).length+' sesi\n';
-      (todayData.sessions||[]).forEach(function(s,i){
-        var dur=Math.round(s.duration/60000);
-        msg+='  Sesi '+(i+1)+': '+dur+' menit\n';
-      });
-    }else{
-      msg+='TIDAK ADA DATA HARI INI\n';
-    }
-    // Active session
-    var active=localStorage.getItem('g_active_session');
-    msg+='\nActive session: '+(active?'ADA':'TIDAK ADA')+'\n';
-    if(active){
-      var as=JSON.parse(active);
-      msg+='Date: '+as.date+'\n';
-      msg+='OnTime: '+new Date(as.onTime).toLocaleTimeString('id-ID');
-    }
-    alert(msg);
-  }catch(e){alert('Error: '+e.message);}
-}
-
 // ============ INIT ============
 loadData();
 setupEvents();
 // Auto-save on browser close/refresh
 window.addEventListener('beforeunload', function(){
+  if(savedIncome||todayTips>0||sessions.length>0){
+    saveData();
+  }
+  if(isOn&&currentOnTime){
+    saveActiveSession();
+  }
+});
+// Also flush data whenever the tab is hidden (switching apps, locking
+// the screen, opening another tab) - beforeunload alone is unreliable
+// on mobile browsers because it often never fires in those cases.
+document.addEventListener('visibilitychange', function(){
+  if(document.visibilityState==='hidden'){
+    if(savedIncome||todayTips>0||sessions.length>0){
+      saveData();
+    }
+    if(isOn&&currentOnTime){
+      saveActiveSession();
+    }
+  }
+});
+// pagehide is a more reliable mobile counterpart to beforeunload
+window.addEventListener('pagehide', function(){
   if(savedIncome||todayTips>0||sessions.length>0){
     saveData();
   }
