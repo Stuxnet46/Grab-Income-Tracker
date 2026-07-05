@@ -618,8 +618,17 @@ function enterApp(){
   }
 }
 function logout(){
-  isOn=false;currentOnTime=null;sessions=[];savedIncome=null;savedNote='';editingDay=null;
-  saveActiveSession(); // clear active session on manual logout
+  // If still ON, auto-record session up to now before logout
+  if(isOn&&currentOnTime){
+    var off=Date.now();
+    sessions.push({onTime:currentOnTime,offTime:off,note:'Keluar',duration:off-currentOnTime});
+    isOn=false;currentOnTime=null;
+  }
+  // Save ALL data FIRST before clearing state
+  saveData();
+  saveActiveSession(); // clear active session flag
+  // Now safe to reset state
+  sessions=[];savedIncome=null;savedNote='';editingDay=null;todayTips=0;
   if(clockInt){clearInterval(clockInt);clockInt=null;}
   pinInput='';pinNewTemp='';setPinMode('masuk');
   document.getElementById('app').style.display='none';
