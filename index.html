@@ -293,7 +293,7 @@ body{font-family:'DM Sans',sans-serif;color:var(--text);background:var(--page-bg
 .hist-day-income{font-size:13px;font-weight:800;font-variant-numeric:tabular-nums;}
 .hist-day-libur{font-size:11px;color:#ff6060;font-weight:700;}
 .hist-day-empty{font-size:13px;color:var(--muted);}
-.hist-tips-note{font-size:10px;color:var(--green);margin-top:1px;}
+.hist-tips-note{font-size:11px;color:var(--green);margin-top:1px;}
 input[type=number]::-webkit-outer-spin-button,
 input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
 </style>
@@ -639,12 +639,14 @@ function tickClock(){
   var ms=totalMs();
   var lt=document.getElementById('liveTimer');if(lt)lt.textContent=fDur(ms);
   var ld=document.getElementById('liveDur');if(ld&&isOn&&currentOnTime)ld.textContent=fDur(Date.now()-currentOnTime);
-  if(savedIncome&&ms>0){
+  if(savedIncome&&ms>=60000){
     var inc=(savedIncome||0)+todayTips;
     var rH=document.getElementById('rH'),rM=document.getElementById('rM'),rS=document.getElementById('rS');
-    if(rH)rH.textContent=fRp(inc/(ms/3600000));
-    if(rM)rM.textContent=fRp(inc/(ms/60000));
-    if(rS)rS.textContent=fRp(inc/(ms/1000));
+    if(ms>=60000){ // only update rate after 1 minute
+      if(rH)rH.textContent=fRp(inc/(ms/3600000));
+      if(rM)rM.textContent=fRp(inc/(ms/60000));
+      if(rS)rS.textContent=fRp(inc/(ms/1000));
+    }
   }
 }
 
@@ -802,6 +804,17 @@ function checkBackupReminder(){
 }
 
 // ============ DATA GETTERS ============
+function getDayDuration(sessions){
+  if(!sessions||sessions.length===0)return '';
+  var ms=sessions.reduce(function(a,s){return a+(s.duration||0);},0);
+  if(ms<=0)return '';
+  var totalMin=Math.floor(ms/60000);
+  var h=Math.floor(totalMin/60);
+  var m=totalMin%60;
+  if(h>0&&m>0)return '⏱ '+h+'j '+m+'m';
+  if(h>0)return '⏱ '+h+'j';
+  return '⏱ '+m+'m';
+}
 function getWeekDays(){
   var days=[];
   for(var i=6;i>=0;i--){
@@ -835,9 +848,10 @@ function render(){var el=document.getElementById('content');if(!el)return;if(cur
 function renderToday(){
   var ms=totalMs(),liveMs=isOn&&currentOnTime?(Date.now()-currentOnTime):0;
   var inc=(savedIncome||0)+todayTips,dp=pct(inc,TARGET_DAILY),bersih=inc-BBM;
-  var perH=ms>0&&savedIncome?fRp(inc/(ms/3600000)):'-';
-  var perM=ms>0&&savedIncome?fRp(inc/(ms/60000)):'-';
-  var perS=ms>0&&savedIncome?fRp(inc/(ms/1000)):'-';
+  var minMs=60000; // minimum 1 minute before showing rate
+  var perH=ms>=minMs&&savedIncome?fRp(inc/(ms/3600000)):'-';
+  var perM=ms>=minMs&&savedIncome?fRp(inc/(ms/60000)):'-';
+  var perS=ms>=minMs&&savedIncome?fRp(inc/(ms/1000)):'-';
   var td=getDay(todayKey()),isLibur=td.libur||false;
   var h='<div class="fade-in">';
 
@@ -1045,25 +1059,35 @@ function renderHistory(){
         // For today use live state from memory
         var isToday=dKey===tKey;
         var dayData=isToday
-          ?{income:savedIncome,tips:todayTips,libur:storedDay?storedDay.libur:false}
+          ?{income:savedIncome,tips:todayTips,libur:storedDay?storedDay.libur:false,sessions:sessions}
           :storedDay;
         var dayTotal=dayData?((dayData.income||0)+(dayData.tips||0)):0;
         var isLibur=dayData&&dayData.libur;
         var dayName=DAYS[d.getDay()]+', '+day+' '+MONTHS[mo.month];
 
-        h+='<div class="hist-day-row">';
-        h+='<div><div class="hist-day-name">'+dayName+'</div>';
-        if(dayData&&dayData.tips>0&&dayData.income>0&&!isLibur){
-          h+='<div class="hist-tips-note">Grab '+fRp(dayData.income)+' + Tips '+fRp(dayData.tips)+'</div>';
+        var dur=getDayDuration(dayData?dayData.sessions:[]);
+        var hasTips=!isLibur&&dayData&&dayData.tips>0&&dayData.income>0;
+        h+='<div class="hist-day-row" style="align-items:flex-start;">';
+        // LEFT: tanggal + grab+tips baris sama dengan jam
+        h+='<div style="flex:1;">';
+        h+='<div class="hist-day-name">'+dayName+'</div>';
+        if(hasTips){
+          h+='<div style="display:flex;align-items:center;gap:8px;margin-top:2px;">';
+          h+='<div class="hist-tips-note" style="margin-top:0;">Grab '+fRp(dayData.income)+' + Tips '+fRp(dayData.tips)+'</div>';
+          h+='</div>';
         }
         h+='</div>';
+        // RIGHT: income di atas, jam di bawah income — rata kanan
+        h+='<div style="text-align:right;flex-shrink:0;">';
         if(isLibur){
           h+='<div class="hist-day-libur">🏖️ Libur</div>';
         }else if(dayTotal>0){
           h+='<div class="hist-day-income" style="color:var(--gold);">'+fRp(dayTotal)+'</div>';
+          if(dur)h+='<div style="font-size:11px;color:var(--muted);margin-top:2px;font-weight:600;">'+dur+'</div>';
         }else{
           h+='<div class="hist-day-empty">-</div>';
         }
+        h+='</div>';
         h+='</div>';
       }
       h+='</div>';
