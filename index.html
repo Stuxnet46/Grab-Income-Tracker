@@ -606,6 +606,8 @@ function checkPin(){
   }
 }
 function enterApp(){
+  // Always reload fresh data from localStorage on every login
+  loadData();
   document.getElementById('pinScreen').style.display='none';
   document.getElementById('app').style.display='flex';
   render();startClock();checkBackupReminder();
