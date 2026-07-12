@@ -1273,6 +1273,15 @@ function setupEvents(){
 // ============ INIT ============
 loadData();
 setupEvents();
+// Jalan tengah keamanan: jika saat load terdeteksi ada sesi ON yang masih
+// berjalan (belum di-OFF-kan) dan masih di hari yang sama, langsung masuk
+// ke app tanpa minta PIN lagi. Ini mengurangi gangguan PIN berulang saat
+// tab dibekukan/direstart Android akibat gonta-ganti aplikasi, TANPA
+// membuka celah keamanan untuk kondisi HP nganggur lama - begitu status
+// OFF (baik manual maupun via logout), PIN tetap wajib seperti biasa.
+if(isOn&&currentOnTime){
+  enterApp();
+}
 // Auto-save on browser close/refresh
 window.addEventListener('beforeunload', function(){
   if(savedIncome||todayTips>0||sessions.length>0){
