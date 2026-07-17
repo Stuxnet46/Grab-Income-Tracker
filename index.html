@@ -284,6 +284,7 @@ body{font-family:'DM Sans',sans-serif;color:var(--text);background:var(--page-bg
 .hist-month-days{font-size:11px;color:var(--muted);margin-top:2px;}
 .hist-month-right{display:flex;align-items:center;gap:10px;}
 .hist-month-total{font-size:16px;font-weight:800;color:var(--green);font-variant-numeric:tabular-nums;}
+.hist-month-hours{font-size:10px;color:var(--muted);text-align:right;margin-top:2px;font-variant-numeric:tabular-nums;}
 .hist-month-arrow{font-size:12px;color:var(--muted);transition:transform 0.25s;}
 .hist-month-arrow.open{transform:rotate(90deg);}
 .hist-days-list{border-top:1px solid var(--border);padding:8px 0;}
@@ -772,6 +773,25 @@ function confirmOff(){
 }
 
 // ============ INCOME ============
+// Tambah komisi per orderan - additive, bukan overwrite. Ini cara utama
+// mencatat penghasilan: tiap orderan selesai, tambahkan komisinya, sistem
+// otomatis akumulasi ke total hari ini. Menghindari kebutuhan hitung ulang
+// total manual tiap kali cek aplikasi Grab.
+function addIncomeOrder(){
+  var el=document.getElementById('addIncomeInp');if(!el)return;
+  var v=parseInt(el.value.replace(/\D/g,''),10);
+  if(!isNaN(v)&&v>0){
+    savedIncome=(savedIncome||0)+v;
+    saveData();
+    showToast('✅ '+fRp(v)+' ditambahkan ke penghasilan!');
+    el.value='';
+    var f=document.getElementById('addIncomeForm');if(f)f.style.display='none';
+    render();
+  }
+}
+// Koreksi total secara manual - overwrite total, dipakai kalau perlu
+// membetulkan angka (misal salah input komisi, atau mau sinkronkan
+// dengan total pasti dari aplikasi Grab).
 function saveIncome(){
   var el=document.getElementById('incomeInp');if(!el)return;
   var v=parseInt(el.value.replace(/\D/g,''),10);
@@ -908,16 +928,20 @@ function checkBackupReminder(){
 }
 
 // ============ DATA GETTERS ============
+function fJamMenit(ms){
+  if(!ms||ms<=0)return '0m';
+  var totalMin=Math.floor(ms/60000);
+  var h=Math.floor(totalMin/60);
+  var m=totalMin%60;
+  if(h>0&&m>0)return h+'j '+m+'m';
+  if(h>0)return h+'j';
+  return m+'m';
+}
 function getDayDuration(sessions){
   if(!sessions||sessions.length===0)return '';
   var ms=sessions.reduce(function(a,s){return a+(s.duration||0);},0);
   if(ms<=0)return '';
-  var totalMin=Math.floor(ms/60000);
-  var h=Math.floor(totalMin/60);
-  var m=totalMin%60;
-  if(h>0&&m>0)return '⏱ '+h+'j '+m+'m';
-  if(h>0)return '⏱ '+h+'j';
-  return '⏱ '+m+'m';
+  return '⏱ '+fJamMenit(ms);
 }
 function getWeekDays(){
   var days=[];
@@ -987,14 +1011,19 @@ function renderToday(){
     h+='<div class="progress-wrap"><div class="progress-meta"><span>Target: '+fRp(TARGET_DAILY)+'</span><span class="progress-pct" style="color:'+(dp>=100?'var(--green)':'var(--gold)')+';">'+dp+'%</span></div>';
     h+='<div class="progress-track"><div class="progress-fill '+(dp>=100?'fill-green':'fill-gold')+'" style="width:'+dp+'%;"></div></div>';
     h+='<div class="progress-note '+(dp>=100?'success':'')+'">'+(dp>=100?'🎉 Target tercapai!':'Kurang '+fRp(TARGET_DAILY-inc))+'</div></div>';
-    h+='<div class="btn-outline-gold" id="btnEditIncome">✏️ Edit Penghasilan</div>';
+    h+='<div style="display:flex;gap:7px;"><div class="btn-outline-gold" id="btnOpenAddIncome" style="flex:1;text-align:center;">➕ Tambah Komisi</div><div class="btn-outline-gold" id="btnEditIncome" style="flex:1;text-align:center;">✏️ Koreksi Total</div></div>';
   }else{
     if(todayTips>0)h+='<div style="margin-bottom:8px;"><div style="font-size:11px;color:var(--muted);margin-bottom:4px;">Tips terkumpul:</div><div style="font-size:20px;font-weight:800;color:var(--green);">'+fRp(todayTips)+'</div></div>';
-    h+='<div style="font-size:13px;color:var(--muted);margin-bottom:10px;">Belum ada input income Grab</div>';
-    h+='<div id="btnOpenIncome" class="btn btn-primary">+ Input Penghasilan</div>';
+    h+='<div style="font-size:13px;color:var(--muted);margin-bottom:10px;">Belum ada komisi Grab tercatat hari ini</div>';
+    h+='<div id="btnOpenAddIncome" class="btn btn-primary">➕ Tambah Komisi Orderan</div>';
   }
-  h+='<div id="incomeForm" style="display:none;margin-top:10px;"><div style="font-size:11px;color:var(--gold);margin-bottom:5px;">Income bersih dari Grab (Rp):</div>';
-  h+='<div class="income-input-wrap"><input class="income-input" type="number" id="incomeInp" placeholder="150000"/>';
+  // Form additive - komisi per orderan, ditambahkan ke total (bukan overwrite)
+  h+='<div id="addIncomeForm" style="display:none;margin-top:10px;"><div style="font-size:11px;color:var(--gold);margin-bottom:5px;">Komisi orderan ini (Rp):</div>';
+  h+='<div class="income-input-wrap"><input class="income-input" type="number" id="addIncomeInp" placeholder="8000"/>';
+  h+='<div id="btnSaveAddIncome" class="btn btn-gold">Tambah</div><div id="btnCancelAddIncome" class="btn btn-ghost">✕</div></div></div>';
+  // Form koreksi - overwrite total, untuk membetulkan angka
+  h+='<div id="incomeForm" style="display:none;margin-top:10px;"><div style="font-size:11px;color:var(--gold);margin-bottom:5px;">Koreksi total penghasilan Grab (Rp):</div>';
+  h+='<div class="income-input-wrap"><input class="income-input" type="number" id="incomeInp" placeholder="'+(savedIncome||150000)+'" value="'+(savedIncome||'')+'"/>';
   h+='<div id="btnSaveIncome" class="btn btn-gold">Simpan</div><div id="btnCancelIncome" class="btn btn-ghost">✕</div></div></div></div>';
 
   // BBM
@@ -1130,6 +1159,15 @@ function renderHistory(){
     // Calculate total (income + tips, exclude libur)
     var mTotal=mDays.filter(function(d){return !d.libur;}).reduce(function(a,d){return a+(d.income||0)+(d.tips||0);},0);
     var workDays=mDays.filter(function(d){return !d.libur&&((d.income||0)+(d.tips||0))>0;}).length;
+    // Total jam online bulan ini - jumlahkan durasi sesi semua hari di
+    // bulan ini. Untuk hari ini, pakai `sessions` (state memori) supaya
+    // sesi yang baru saja di-OFF-kan langsung ikut terhitung tanpa perlu
+    // reload data dari localStorage.
+    var tKeyMonth=todayKey();
+    var mDurationMs=mDays.reduce(function(a,d){
+      var s=(d.date===tKeyMonth)?sessions:(d.sessions||[]);
+      return a+(s||[]).reduce(function(b,x){return b+(x.duration||0);},0);
+    },0);
 
     var monthName=MONTHS[mo.month]+' '+mo.year;
 
@@ -1140,7 +1178,9 @@ function renderHistory(){
     h+='<div class="hist-month-days">'+(workDays>0?workDays+' hari kerja':'Belum ada data')+'</div>';
     h+='</div>';
     h+='<div class="hist-month-right">';
-    h+='<div class="hist-month-total">'+(mTotal>0?fRp(mTotal):'-')+'</div>';
+    h+='<div><div class="hist-month-total">'+(mTotal>0?fRp(mTotal):'-')+'</div>';
+    if(mDurationMs>0)h+='<div class="hist-month-hours">⏱ '+fJamMenit(mDurationMs)+' online</div>';
+    h+='</div>';
     h+='<div class="hist-month-arrow'+(isOpen?' open':'')+'">▶</div>';
     h+='</div></div>';
 
@@ -1254,7 +1294,10 @@ function setupEvents(){
     if(histHdr){var mKey=histHdr.id.replace('histHdr_','');toggleHistMonth(mKey);return;}
     var t=e.target.closest('[id]');if(!t)return;var id=t.id;
     if(id==='onoffBtn')toggleOnOff();
-    else if(id==='btnOpenIncome'||id==='btnEditIncome'){var f=document.getElementById('incomeForm');if(f){f.style.display='block';setTimeout(function(){var inp=document.getElementById('incomeInp');if(inp)inp.focus();},100);}}
+    else if(id==='btnOpenAddIncome'){var f=document.getElementById('addIncomeForm');if(f){f.style.display='block';setTimeout(function(){var inp=document.getElementById('addIncomeInp');if(inp)inp.focus();},100);}}
+    else if(id==='btnSaveAddIncome')addIncomeOrder();
+    else if(id==='btnCancelAddIncome'){var f=document.getElementById('addIncomeForm');if(f)f.style.display='none';}
+    else if(id==='btnEditIncome'){var f=document.getElementById('incomeForm');if(f){f.style.display='block';setTimeout(function(){var inp=document.getElementById('incomeInp');if(inp)inp.focus();},100);}}
     else if(id==='btnSaveIncome')saveIncome();
     else if(id==='btnCancelIncome'){var f=document.getElementById('incomeForm');if(f)f.style.display='none';}
     else if(id==='btnLiburToday')toggleLibur(todayKey());
