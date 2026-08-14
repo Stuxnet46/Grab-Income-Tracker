@@ -446,6 +446,14 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
     <div style="margin-top:12px;padding:10px 14px;background:var(--card-bg);border-radius:10px;border:1px solid var(--border);">
       <div style="font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Total Tips Hari Ini</div>
       <div style="font-size:18px;font-weight:800;color:var(--green);font-family:'Syne',sans-serif;" id="totalTipsDisp">Rp 0</div>
+      <div style="display:flex;gap:7px;margin-top:10px;">
+        <div id="btnResetTips" class="btn-outline-gold" style="flex:1;text-align:center;margin-top:0;">🔄 Reset ke 0</div>
+        <div id="btnEditTips" class="btn-outline-gold" style="flex:1;text-align:center;margin-top:0;">✏️ Koreksi Total</div>
+      </div>
+      <div id="tipsEditForm" style="display:none;margin-top:8px;">
+        <input class="income-input" type="number" id="tipsEditInp" placeholder="0" style="width:100%;margin-bottom:7px;"/>
+        <div style="display:flex;gap:7px;"><div id="btnSaveTipsEdit" class="btn btn-gold" style="flex:1;text-align:center;">Simpan</div><div id="btnCancelTipsEdit" class="btn btn-ghost" style="flex:1;text-align:center;">✕</div></div>
+      </div>
     </div>
   </div>
 </div>
@@ -855,6 +863,38 @@ function addTips(){
   showToast('✅ '+fRp(calcVal)+' ditambahkan ke tips!');
   document.getElementById('totalTipsDisp').textContent=fRp(todayTips);
   resetCalc();render();
+}
+// Reset total tips hari ini ke 0 - dipakai kalau semua entry hari itu
+// salah dan mau mulai ulang dari nol. Minta konfirmasi karena aksi ini
+// tidak bisa dibatalkan (menghapus akumulasi, bukan cuma satu entry).
+function resetTipsToZero(){
+  if(todayTips<=0){showToast('Tips hari ini sudah Rp 0');return;}
+  if(!confirm('Yakin reset tips hari ini ke Rp 0? Aksi ini tidak bisa dibatalkan.'))return;
+  todayTips=0;
+  saveData();
+  document.getElementById('totalTipsDisp').textContent=fRp(todayTips);
+  showToast('✅ Tips hari ini direset ke Rp 0');
+  render();
+}
+// Koreksi total tips secara manual - overwrite ke angka yang diinput,
+// dipakai kalau totalnya salah tapi bukan nol (mis. salah input jumlah
+// nominal saat menambah tips).
+function openTipsEdit(){
+  var f=document.getElementById('tipsEditForm');if(!f)return;
+  f.style.display='block';
+  var inp=document.getElementById('tipsEditInp');
+  if(inp){inp.value=todayTips||'';setTimeout(function(){inp.focus();},100);}
+}
+function cancelTipsEdit(){var f=document.getElementById('tipsEditForm');if(f)f.style.display='none';}
+function saveTipsEdit(){
+  var el=document.getElementById('tipsEditInp');if(!el)return;
+  var v=parseInt(el.value.replace(/\D/g,''),10);
+  if(isNaN(v)||v<0){showToast('Masukkan angka yang valid',true);return;}
+  todayTips=v;
+  saveData();
+  document.getElementById('totalTipsDisp').textContent=fRp(todayTips);
+  showToast('✅ Total tips dikoreksi ke '+fRp(v));
+  cancelTipsEdit();render();
 }
 
 // ============ EXPORT / IMPORT ============
@@ -1286,6 +1326,10 @@ function setupEvents(){
   document.getElementById('calcTagihan').addEventListener('input',calcChange);
   document.getElementById('btnAddTips').addEventListener('click',addTips);
   document.getElementById('btnResetCalc').addEventListener('click',resetCalc);
+  document.getElementById('btnResetTips').addEventListener('click',resetTipsToZero);
+  document.getElementById('btnEditTips').addEventListener('click',openTipsEdit);
+  document.getElementById('btnSaveTipsEdit').addEventListener('click',saveTipsEdit);
+  document.getElementById('btnCancelTipsEdit').addEventListener('click',cancelTipsEdit);
 
   // Content delegation
   document.getElementById('content').addEventListener('click',function(e){
