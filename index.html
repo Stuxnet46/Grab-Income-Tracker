@@ -493,6 +493,7 @@ var isDark=localStorage.getItem('g_theme')==='dark';
 var currentTab='today';
 var isOn=false,currentOnTime=null,sessions=[],savedIncome=null,savedNote='',editingDay=null;
 var allDays=[],todayTips=0,calcVal=0,clockInt=null;
+var currentDateKey=todayKey(); // dipakai untuk deteksi pergantian hari saat tab tetap terbuka
 
 // ============ THEME ============
 function applyTheme(){
@@ -552,17 +553,41 @@ function loadData(){
     if(activeSession){
       try{
         var as=JSON.parse(activeSession);
-        // Only restore if same day
         if(as.date===todayKey()&&as.onTime){
           isOn=true;
           currentOnTime=as.onTime;
+        }else if(as.onTime){
+          // Sesi dari hari sebelumnya yang belum sempat di-OFF-kan karena
+          // tab ditutup total (bukan cuma dibekukan/direstart Android).
+          // Tutup sesi itu di tengah malam SETELAH tanggal sesi dimulai,
+          // simpan ke hari itu - bukan dibuang begitu saja seperti
+          // sebelumnya. Tidak dilanjutkan otomatis ke hari ini; driver
+          // perlu tekan ON lagi secara sadar untuk mulai sesi hari ini.
+          try{
+            var cutoff=new Date(as.date);cutoff.setHours(0,0,0,0);cutoff.setDate(cutoff.getDate()+1);
+            var cutoffMs=cutoff.getTime();
+            if(cutoffMs>as.onTime){
+              var stored2=JSON.parse(localStorage.getItem('g_data')||'{}');
+              var days2=stored2.allDays||[];
+              var existing2=days2.find(function(dd){return dd.date===as.date;});
+              var merged2=mergeSessions(existing2?existing2.sessions:[],[{onTime:as.onTime,offTime:cutoffMs,note:'Lewat tengah malam (otomatis)',duration:cutoffMs-as.onTime}]);
+              days2=upsertDay(days2,as.date,{sessions:merged2});
+              localStorage.setItem('g_data',JSON.stringify({allDays:days2}));
+              allDays=days2;
+            }
+          }catch(e2){}
+          localStorage.removeItem('g_active_session');
         }else{
-          // Different day - clear stale session
           localStorage.removeItem('g_active_session');
         }
       }catch(e){localStorage.removeItem('g_active_session');}
     }
   }catch(e){}
+  // Sinkronkan ulang currentDateKey setiap kali data dimuat (reload/login),
+  // supaya checkDateRollover() hanya mendeteksi pergantian hari yang
+  // benar-benar terjadi SAAT tab tetap terbuka, bukan dibandingkan
+  // dengan tanggal basi dari sebelum reload.
+  currentDateKey=todayKey();
 }
 // saveData() now always re-reads the freshest copy of g_data from
 // localStorage first, merges today's sessions (union, not overwrite),
@@ -700,6 +725,50 @@ function logout(){
 }
 
 // ============ CLOCK ============
+// Deteksi pergantian hari SAAT tab tetap terbuka (tanpa reload/login
+// ulang). Tanpa ini, variabel `sessions`/`savedIncome`/`todayTips` di
+// memori tetap menyimpan data hari kemarin, dan begitu ada penyimpanan
+// berikutnya (mis. OFF sesi setelah lewat tengah malam), seluruh data
+// kemarin ikut tertulis ke tanggal hari ini - inilah bug yang membuat
+// riwayat sesi kemarin muncul tercampur di hari ini.
+function checkDateRollover(){
+  var nowKey=todayKey();
+  if(nowKey===currentDateKey)return;
+  var oldKey=currentDateKey;
+  var midnight=new Date();midnight.setHours(0,0,0,0);
+  var midnightMs=midnight.getTime();
+  var closingSessions=sessions.slice();
+  if(isOn&&currentOnTime&&currentOnTime<midnightMs){
+    // Tutup sesi yang sedang berjalan tepat di batas tengah malam,
+    // sisanya (dari tengah malam sampai sekarang) jadi sesi hari baru.
+    closingSessions.push({onTime:currentOnTime,offTime:midnightMs,note:'Lewat tengah malam',duration:midnightMs-currentOnTime});
+  }
+  // Tulis seluruh data hari kemarin secara eksplisit ke tanggal LAMA,
+  // bukan lewat todayKey() yang sudah berganti ke hari baru.
+  try{
+    var stored=JSON.parse(localStorage.getItem('g_data')||'{}');
+    var days=stored.allDays||[];
+    var existing=days.find(function(d){return d.date===oldKey;});
+    var mergedSessions=mergeSessions(existing?existing.sessions:[],closingSessions);
+    days=upsertDay(days,oldKey,{
+      sessions:mergedSessions,
+      income:savedIncome!=null?savedIncome:(existing?existing.income:null),
+      note:savedNote||(existing?existing.note:''),
+      tips:Math.max(todayTips||0,existing?(existing.tips||0):0)
+    });
+    localStorage.setItem('g_data',JSON.stringify({allDays:days}));
+    allDays=days;
+  }catch(e){}
+  // Reset state ke kondisi hari baru, bersih dari 0
+  currentDateKey=nowKey;
+  sessions=[];savedIncome=null;savedNote='';todayTips=0;
+  if(isOn){
+    currentOnTime=midnightMs; // sesi dilanjutkan dari titik tengah malam hari baru
+    saveActiveSession();
+  }
+  render();
+  showToast('🌙 Data kemarin tersimpan · hari baru dimulai dari 0',true);
+}
 function startClock(){
   if(clockInt)clearInterval(clockInt);
   clockInt=setInterval(tickClock,1000);tickClock();
@@ -715,6 +784,7 @@ function startClock(){
   },30000);
 }
 function tickClock(){
+  checkDateRollover();
   var now=new Date();
   var dEl=document.getElementById('clockDate'),tEl=document.getElementById('clockTime');
   if(dEl)dEl.textContent=DAYS[now.getDay()]+', '+now.getDate()+' '+MONTHS[now.getMonth()];
