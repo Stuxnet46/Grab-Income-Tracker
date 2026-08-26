@@ -492,7 +492,7 @@ var storedPin=localStorage.getItem('g_pin')||DEFAULT_PIN;
 var isDark=localStorage.getItem('g_theme')==='dark';
 var currentTab='today';
 var isOn=false,currentOnTime=null,sessions=[],savedIncome=null,savedNote='',editingDay=null;
-var allDays=[],todayTips=0,calcVal=0,clockInt=null;
+var allDays=[],todayTips=0,calcVal=0,clockInt=null,todayOrderCount=0;
 var currentDateKey=todayKey(); // dipakai untuk deteksi pergantian hari saat tab tetap terbuka
 
 // ============ THEME ============
@@ -546,8 +546,8 @@ function loadData(){
     var d=JSON.parse(localStorage.getItem('g_data')||'{}');
     allDays=d.allDays||[];
     var td=allDays.find(function(x){return x.date===todayKey();});
-    if(td){sessions=td.sessions||[];savedIncome=td.income||null;savedNote=td.note||'';todayTips=td.tips||0;}
-    else{sessions=[];savedIncome=null;savedNote='';todayTips=0;}
+    if(td){sessions=td.sessions||[];savedIncome=td.income||null;savedNote=td.note||'';todayTips=td.tips||0;todayOrderCount=td.orderCount||0;}
+    else{sessions=[];savedIncome=null;savedNote='';todayTips=0;todayOrderCount=0;}
     // Restore active session if browser was closed while ON
     var activeSession=localStorage.getItem('g_active_session');
     if(activeSession){
@@ -604,7 +604,8 @@ function saveData(){
       sessions:mergedSessions,
       income:savedIncome!=null?savedIncome:(existing?existing.income:null),
       note:savedNote||(existing?existing.note:''),
-      tips:Math.max(todayTips||0,existing?(existing.tips||0):0)
+      tips:Math.max(todayTips||0,existing?(existing.tips||0):0),
+      orderCount:Math.max(todayOrderCount||0,existing?(existing.orderCount||0):0)
     });
     localStorage.setItem('g_data',JSON.stringify({allDays:days}));
     allDays=days;
@@ -716,7 +717,7 @@ function logout(){
   saveData();
   saveActiveSession(); // clear active session flag
   // Now safe to reset state
-  sessions=[];savedIncome=null;savedNote='';editingDay=null;todayTips=0;
+  sessions=[];savedIncome=null;savedNote='';editingDay=null;todayTips=0;todayOrderCount=0;
   if(clockInt){clearInterval(clockInt);clockInt=null;}
   if(window._autoSaveInt){clearInterval(window._autoSaveInt);window._autoSaveInt=null;}
   pinInput='';pinNewTemp='';setPinMode('masuk');
@@ -754,14 +755,15 @@ function checkDateRollover(){
       sessions:mergedSessions,
       income:savedIncome!=null?savedIncome:(existing?existing.income:null),
       note:savedNote||(existing?existing.note:''),
-      tips:Math.max(todayTips||0,existing?(existing.tips||0):0)
+      tips:Math.max(todayTips||0,existing?(existing.tips||0):0),
+      orderCount:Math.max(todayOrderCount||0,existing?(existing.orderCount||0):0)
     });
     localStorage.setItem('g_data',JSON.stringify({allDays:days}));
     allDays=days;
   }catch(e){}
   // Reset state ke kondisi hari baru, bersih dari 0
   currentDateKey=nowKey;
-  sessions=[];savedIncome=null;savedNote='';todayTips=0;
+  sessions=[];savedIncome=null;savedNote='';todayTips=0;todayOrderCount=0;
   if(isOn){
     currentOnTime=midnightMs; // sesi dilanjutkan dari titik tengah malam hari baru
     saveActiveSession();
@@ -860,6 +862,7 @@ function addIncomeOrder(){
   var v=parseInt(el.value.replace(/\D/g,''),10);
   if(!isNaN(v)&&v>0){
     savedIncome=(savedIncome||0)+v;
+    todayOrderCount=(todayOrderCount||0)+1; // 1 komisi ditambahkan = 1 orderan selesai
     saveData();
     showToast('✅ '+fRp(v)+' ditambahkan ke penghasilan!');
     el.value='';
@@ -1079,6 +1082,17 @@ function getMonthDays(){
     return d;
   });
 }
+// Total orderan keseluruhan sejak mulai tercatat (tidak dibatasi rentang
+// waktu) - dihitung dari orderCount tiap hari, yang hanya bertambah
+// lewat "Tambah Komisi Orderan" (additive), bukan dari "Koreksi Total"
+// karena itu bukan orderan baru.
+function getTotalOrderCount(){
+  var tKey=todayKey();
+  return allDays.reduce(function(a,d){
+    var count=(d.date===tKey)?todayOrderCount:(d.orderCount||0);
+    return a+(count||0);
+  },0);
+}
 
 // ============ RENDER ============
 function render(){var el=document.getElementById('content');if(!el)return;if(currentTab==='today')el.innerHTML=renderToday();else if(currentTab==='week')el.innerHTML=renderWeek();else if(currentTab==='month')el.innerHTML=renderMonth();else el.innerHTML=renderHistory();}
@@ -1240,6 +1254,9 @@ function toggleHistMonth(key){
 function renderHistory(){
   var h='<div class="fade-in">';
   h+='<div class="section-title">Riwayat Penghasilan</div>';
+
+  var totalOrderCount=getTotalOrderCount();
+  h+='<div class="card card-purple" style="text-align:center;"><div class="card-label label-purple">📦 Total Orderan</div><div class="big-num num-purple">'+totalOrderCount.toLocaleString('id-ID')+' orderan</div></div>';
 
   // Build months from July 2026 to current month
   var startYear=2026,startMonth=6; // July 2026 = month index 6
