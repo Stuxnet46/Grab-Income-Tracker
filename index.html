@@ -1259,9 +1259,18 @@ function renderHistory(){
   var totalOrderCount=getTotalOrderCount();
   h+='<div class="card card-purple" style="text-align:center;"><div class="card-label label-purple">📦 Total Orderan</div><div class="big-num num-purple">'+totalOrderCount.toLocaleString('id-ID')+' orderan</div></div>';
 
-  // Build months from July 2026 to current month
-  var startYear=2026,startMonth=6; // July 2026 = month index 6
+  // Bulan mulai riwayat dideteksi otomatis dari data paling awal yang
+  // ada (allDays), bukan hardcode - supaya backfill data lama (mis.
+  // Juni) otomatis ikut tampil tanpa perlu diedit manual lagi.
   var now=new Date();
+  var startYear=now.getFullYear(),startMonth=now.getMonth();
+  allDays.forEach(function(d){
+    var dt=new Date(d.date);
+    if(isNaN(dt.getTime()))return;
+    if(dt.getFullYear()<startYear||(dt.getFullYear()===startYear&&dt.getMonth()<startMonth)){
+      startYear=dt.getFullYear();startMonth=dt.getMonth();
+    }
+  });
   var months=[];
   var y=startYear,m=startMonth;
   while(y<now.getFullYear()||(y===now.getFullYear()&&m<=now.getMonth())){
@@ -1296,6 +1305,12 @@ function renderHistory(){
       var s=(d.date===tKeyMonth)?sessions:(d.sessions||[]);
       return a+(s||[]).reduce(function(b,x){return b+(x.duration||0);},0);
     },0);
+    // Total orderan bulan ini - jumlahkan orderCount tiap hari di bulan
+    // ini (hanya bertambah lewat "Tambah Komisi Orderan").
+    var mOrderCount=mDays.reduce(function(a,d){
+      var c=(d.date===tKeyMonth)?todayOrderCount:(d.orderCount||0);
+      return a+(c||0);
+    },0);
 
     var monthName=MONTHS[mo.month]+' '+mo.year;
 
@@ -1308,6 +1323,7 @@ function renderHistory(){
     h+='<div class="hist-month-right">';
     h+='<div><div class="hist-month-total">'+(mTotal>0?fRp(mTotal):'-')+'</div>';
     if(mDurationMs>0)h+='<div class="hist-month-hours">⏱ '+fJamMenit(mDurationMs)+' online</div>';
+    if(mOrderCount>0)h+='<div class="hist-month-hours">📦 '+mOrderCount.toLocaleString('id-ID')+' orderan</div>';
     h+='</div>';
     h+='<div class="hist-month-arrow'+(isOpen?' open':'')+'">▶</div>';
     h+='</div></div>';
