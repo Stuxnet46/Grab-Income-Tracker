@@ -1212,15 +1212,16 @@ function renderWeek(){
 
 function renderMonth(){
   var now=new Date();var curMonth=now.getMonth();var curYear=now.getFullYear();var mDays=getMonthDays();
+  var daysInMonth=new Date(curYear,curMonth+1,0).getDate(); // jumlah hari asli bulan ini, bukan angka tetap
   var wDays=mDays.filter(function(d){return (d.income>0||d.tips>0)&&!d.libur;});
   var mTotal=wDays.reduce(function(a,d){return a+(d.income||0)+(d.tips||0);},0);
   var mp=pct(mTotal,TARGET_MONTHLY),avg=wDays.length>0?mTotal/wDays.length:0;
-  var est=wDays.length>0?avg*26:0,totalBBM=wDays.length*BBM,bersih=mTotal-totalBBM;
+  var est=wDays.length>0?avg*daysInMonth:0,totalBBM=wDays.length*BBM,bersih=mTotal-totalBBM;
   var h='<div class="fade-in">';
   h+='<div class="card card-purple"><div class="card-label label-purple">Total '+MONTHS[curMonth]+' '+curYear+'</div><div class="big-num num-purple">'+fRp(mTotal)+'</div>';
   h+='<div class="progress-wrap"><div class="progress-meta"><span>Target: '+fRp(TARGET_MONTHLY)+'</span><span class="progress-pct" style="color:'+(mp>=100?'var(--green)':'#a67fff')+';">'+mp+'%</span></div>';
   h+='<div class="progress-track"><div class="progress-fill fill-purple" style="width:'+mp+'%;"></div></div>';
-  h+='<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:4px;"><span>Hari kerja: '+wDays.length+' / 26</span>'+(mp<100?'<span>Kurang '+fRp(TARGET_MONTHLY-mTotal)+'</span>':'')+'</div>';
+  h+='<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:4px;"><span>Hari kerja: '+wDays.length+' / '+daysInMonth+'</span>'+(mp<100?'<span>Kurang '+fRp(TARGET_MONTHLY-mTotal)+'</span>':'')+'</div>';
   if(mp>=100)h+='<div class="progress-note success">🎉 Target bulan tercapai!</div>';
   h+='</div></div>';
   h+='<div class="stats-grid"><div class="stat-card"><div class="stat-label">Rata-rata / Hari</div><div class="stat-val" style="color:var(--gold);">'+fRp(avg)+'</div></div>';
