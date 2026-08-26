@@ -1196,6 +1196,8 @@ function renderWeek(){
     if(d.libur)h+='<span class="day-badge libur-badge">LIBUR</span>';
     h+='</div><div class="day-income" style="color:'+(d.libur?'var(--muted)':(dayTotal>0?clr:'var(--muted)'))+'">'+(d.libur?'Libur':(dayTotal>0?fRp(dayTotal):'-'))+'</div></div>';
     if(d.tips>0&&d.income>0&&!d.libur)h+='<div style="font-size:10px;color:var(--green);margin-bottom:4px;">Grab '+fRp(d.income||0)+' + Tips '+fRp(d.tips||0)+'</div>';
+    var dOrderCount=(d.key===tKey)?todayOrderCount:(d.orderCount||0);
+    if(dOrderCount>0&&!d.libur)h+='<div style="font-size:10px;color:var(--muted);margin-bottom:4px;">📦 '+dOrderCount.toLocaleString('id-ID')+' orderan</div>';
     if(dayTotal>0&&!d.libur)h+='<div class="day-bar"><div class="day-bar-fill" style="width:'+p+'%;background:'+(p>=100?'var(--green)':'linear-gradient(90deg,#ffc800,#ff9500)')+'"></div></div>';
     if(isEditing){
       h+='<div style="margin-top:8px;"><div style="font-size:11px;color:var(--gold);margin-bottom:5px;">Penghasilan bersih (Rp):</div>';
@@ -1237,6 +1239,8 @@ function renderMonth(){
       var dayTotal=(d.income||0)+(d.tips||0);
       h+='<div><div class="day-income" style="color:'+(d.libur?'var(--muted)':(pct(dayTotal,TARGET_DAILY)>=100?'var(--green)':'var(--gold)'))+'">'+(d.libur?'Libur':fRp(dayTotal))+'</div>';
       if(!d.libur&&d.tips>0)h+='<div style="font-size:10px;color:var(--green);text-align:right;">+Tips '+fRp(d.tips)+'</div>';
+      var dOrderCountM=(d.date===todayKey())?todayOrderCount:(d.orderCount||0);
+      if(!d.libur&&dOrderCountM>0)h+='<div style="font-size:10px;color:var(--muted);text-align:right;">📦 '+dOrderCountM.toLocaleString('id-ID')+' orderan</div>';
       if(!d.libur)h+='<div style="font-size:10px;color:var(--muted);text-align:right;">'+pct(dayTotal,TARGET_DAILY)+'% target</div>';
       h+='</div></div>';
       if(!d.libur&&dayTotal>0)h+='<div class="day-bar"><div class="day-bar-fill" style="width:'+pct(dayTotal,TARGET_DAILY)+'%;background:'+(pct(dayTotal,TARGET_DAILY)>=100?'var(--green)':'linear-gradient(90deg,#ffc800,#ff9500)')+'"></div></div>';
@@ -1347,7 +1351,7 @@ function renderHistory(){
         // For today use live state from memory
         var isToday=dKey===tKey;
         var dayData=isToday
-          ?{income:savedIncome,tips:todayTips,libur:storedDay?storedDay.libur:false,sessions:sessions}
+          ?{income:savedIncome,tips:todayTips,libur:storedDay?storedDay.libur:false,sessions:sessions,orderCount:todayOrderCount}
           :storedDay;
         var dayTotal=dayData?((dayData.income||0)+(dayData.tips||0)):0;
         var isLibur=dayData&&dayData.libur;
@@ -1371,6 +1375,7 @@ function renderHistory(){
           h+='<div class="hist-day-libur">🏖️ Libur</div>';
         }else if(dayTotal>0){
           h+='<div class="hist-day-income" style="color:var(--gold);">'+fRp(dayTotal)+'</div>';
+          if(dayData&&dayData.orderCount>0)h+='<div style="font-size:11px;color:var(--muted);margin-top:2px;">📦 '+dayData.orderCount.toLocaleString('id-ID')+' orderan</div>';
           if(dur)h+='<div style="font-size:11px;color:var(--muted);margin-top:2px;font-weight:600;">'+dur+'</div>';
         }else{
           h+='<div class="hist-day-empty">-</div>';
